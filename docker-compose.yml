@@ -6,8 +6,8 @@ services:
     container_name: champart_mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: champart123
+      MYSQL_DATABASE: champart_db
     ports:
       - "3307:3306"
     volumes:
@@ -28,8 +28,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: champart123
+      MYSQL_DATABASE: champart_db
       MYSQL_USER: root
       MYSQL_HOST: db
       MYSQL_PORT: 3306
