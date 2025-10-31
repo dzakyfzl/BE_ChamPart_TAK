@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String
 from app.database.database import Base
+from .minatPengguna import minatPengguna
 
-class Bakat(Base):
+class Minat(Base):
     __tablename__ = "Minat"
     
     idMinat = Column(Integer, primary_key=True, autoincrement=True)

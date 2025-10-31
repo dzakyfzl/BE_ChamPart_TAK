@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database.database import Base
+from .minatPengguna import minatPengguna
 
 class Pengguna(Base):
     __tablename__ = "Pengguna"
@@ -15,6 +16,7 @@ class Pengguna(Base):
     idLampiran = Column(Integer, ForeignKey('lampiran.idLampiran'), nullable=False)
   
     lampiran = relationship("Lampiran", backref="pengguna")
+    minat_list = relationship("Minat", secondary=minatPengguna, backref="pengguna_list")
 
     def __repr__(self):
         return f"<Pengguna(idPengguna={self.idPengguna}, nama='{self.nama}')>"
