@@ -1,16 +1,12 @@
-# Nama workflow Anda, akan muncul di tab "Actions" GitHub
 name: Python CI (Lint & Test)
 
-# Pemicu: Kapan workflow ini harus dijalankan?
 on:
-  # 1. Saat ada push ke branch 'main'
   push:
     branches: [ "main" ]
-  # 2. Saat ada Pull Request yang dibuka ke branch 'main'
+
   pull_request:
     branches: [ "main" ]
 
-# Pekerjaan (Jobs) yang akan dijalankan
 jobs:
   test-python:
     runs-on: ubuntu-latest
@@ -18,14 +14,14 @@ jobs:
       db:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: 'rootpassword123' # Password sederhana untuk testing
+          MYSQL_ROOT_PASSWORD: 'rootpassword123'
           MYSQL_DATABASE: 'test_db'
           MYSQL_USER: 'user'
           MYSQL_PASSWORD: 'password123'
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -h localhost -p rootpassword123"
+          --health-cmd "mysqladmin ping -h localhost -u user -ppassword123"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -56,8 +52,8 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: 'rootpassword123'
           MYSQL_PASSWORD: 'password123'
-          MYSQL_DATABASE: 'test-db'
-          MYSQL_HOST: 'db'
+          MYSQL_DATABASE: 'test_db'
+          MYSQL_HOST: 'localhost'
           MYSQL_PORT: '3306'
           MYSQL_USER: 'user'
           TOKEN_SECRET_KEY: 'token-password-example'
