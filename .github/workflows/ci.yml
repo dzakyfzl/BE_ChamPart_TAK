@@ -1,0 +1,63 @@
+# Nama workflow Anda, akan muncul di tab "Actions" GitHub
+name: Python CI (Lint & Test)
+
+# Pemicu: Kapan workflow ini harus dijalankan?
+on:
+  # 1. Saat ada push ke branch 'main'
+  push:
+    branches: [ "main" ]
+  # 2. Saat ada Pull Request yang dibuka ke branch 'main'
+  pull_request:
+    branches: [ "main" ]
+
+# Pekerjaan (Jobs) yang akan dijalankan
+jobs:
+  test-python:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 'rootpassword123' # Password sederhana untuk testing
+          MYSQL_DATABASE: 'test_db'
+          MYSQL_USER: 'user'
+          MYSQL_PASSWORD: 'password123'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -p password123"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6.0.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      - name: Lint with flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        run: |
+          pytest
+        env:
+          MYSQL_ROOT_PASSWORD: 'rootpassword123'
+          MYSQL_PASSWORD: 'password123'
+          MYSQL_DATABASE: 'test-db'
+          MYSQL_HOST: 'db'
+          MYSQL_PORT: '3306'
+          MYSQL_USER: 'user'
+          TOKEN_SECRET_KEY: 'token-password-example'
