@@ -1,16 +1,17 @@
-CREATE DATABASE IMPAL;
+-- Active: 1761741670299@@127.0.0.1@3307@champart
+CREATE DATABASE champart;
 
-USE IMPAL;
+USE champart;
 
-CREATE TABLE Lampiran{
+CREATE TABLE Lampiran(
     idLampiran INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(255) NOT NULL,
     jenis VARCHAR(50) NOT NULL,
     ukuran INT NOT NULL,
     folder VARCHAR(255) NOT NULL
-};
+);
 
-CREATE TABLE Pengguna{
+CREATE TABLE Pengguna(
     idPengguna INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -20,28 +21,28 @@ CREATE TABLE Pengguna{
     hashed_password TEXT NOT NULL,
     idLampiran INT NOT NULL,
     FOREIGN KEY (idLampiran) REFERENCES Lampiran(idLampiran)
-}
+);
 
-CREATE TABLE Minat{
+CREATE TABLE Minat(
     idMinat INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(100) NOT NULL
-}
+);
 
-CREATE TABLE Bakat{
+CREATE TABLE Bakat(
     idBakat INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(100) NOT NULL
-}
+);
 
-CREATE TABLE instansi{
+CREATE TABLE Instansi(
     idInstansi INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(100) NOT NULL,
     jenis VARCHAR(50) NOT NULL,
     alamat VARCHAR(255) NOT NULL,
     idLampiran INT NOT NULL,
     FOREIGN KEY (idLampiran) REFERENCES Lampiran(idLampiran)
-}
+);
 
-CREATE TABLE AdminInstansi{
+CREATE TABLE AdminInstansi(
     idAdminInstansi INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -52,10 +53,10 @@ CREATE TABLE AdminInstansi{
     FOREIGN KEY (idInstansi) REFERENCES instansi(idInstansi),
     idLampiran INT NOT NULL,
     FOREIGN KEY (idLampiran) REFERENCES Lampiran(idLampiran)
-}
+);
 
 
-CREATE TABLE AdminPengawas{
+CREATE TABLE AdminPengawas(
     idAdminPengawas INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -64,9 +65,9 @@ CREATE TABLE AdminPengawas{
     hashed_password TEXT NOT NULL,
     idLampiran INT NOT NULL,
     FOREIGN KEY (idLampiran) REFERENCES Lampiran(idLampiran)
-}
+);
 
-CREATE TABLE Kegiatan{
+CREATE TABLE Kegiatan(
     idKegiatan INT PRIMARY KEY AUTO_INCREMENT,
     nama VARCHAR(100) NOT NULL,
     deskripsi TEXT NOT NULL,
@@ -83,40 +84,40 @@ CREATE TABLE Kegiatan{
     FOREIGN KEY (idInstansi) REFERENCES instansi(idInstansi),
     idLampiran INT NOT NULL,
     FOREIGN KEY (idLampiran) REFERENCES Lampiran(idLampiran)
-}
+);
 
-CREATE TABLE minatPengguna{
+CREATE TABLE MinatPengguna(
     idMinat INT NOT NULL,
     FOREIGN KEY (idMinat) REFERENCES Minat(idMinat),
     idPengguna INT NOT NULL,
     FOREIGN KEY (idPengguna) REFERENCES Pengguna(idPengguna)
-}
+);
 
-CREATE TABLE bakatPengguna{
+CREATE TABLE BakatPengguna(
     idBakat INT NOT NULL,
     FOREIGN KEY (idBakat) REFERENCES Bakat(idBakat),
     idPengguna INT NOT NULL,
     FOREIGN KEY (idPengguna) REFERENCES Pengguna(idPengguna)
-}
+);
 
-CREATE TABLE bakatKegiatan{
+CREATE TABLE BakatKegiatan(
     idBakat INT NOT NULL,
     FOREIGN KEY (idBakat) REFERENCES Bakat(idBakat),
     idKegiatan INT NOT NULL,
     FOREIGN KEY (idKegiatan) REFERENCES Kegiatan(idKegiatan)
-}
+);
 
-CREATE TABLE minatKegiatan{
+CREATE TABLE MinatKegiatan(
     idMinat INT NOT NULL,
     FOREIGN KEY (idMinat) REFERENCES Minat(idMinat),
     idKegiatan INT NOT NULL,
     FOREIGN KEY (idKegiatan) REFERENCES Kegiatan(idKegiatan)
-}
+);
 
-CREATE TABLE Simpan{
+CREATE TABLE Simpan(    
     idPengguna INT NOT NULL,
     FOREIGN KEY (idPengguna) REFERENCES Pengguna(idPengguna),
     idKegiatan INT NOT NULL,
     FOREIGN KEY (idKegiatan) REFERENCES Kegiatan(idKegiatan),
     waktu DATETIME NOT NULL
-}
+);
