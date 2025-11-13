@@ -6,8 +6,10 @@ services:
     container_name: champart_mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: champart123
-      MYSQL_DATABASE: champart_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
       - "3307:3306"
     volumes:
@@ -16,7 +18,7 @@ services:
     networks:
       - champart_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -28,11 +30,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      MYSQL_ROOT_PASSWORD: champart123
-      MYSQL_DATABASE: champart_db
-      MYSQL_USER: root
-      MYSQL_HOST: db
-      MYSQL_PORT: 3306
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY}
     depends_on:
       db:
         condition: service_healthy
