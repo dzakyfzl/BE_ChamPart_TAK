@@ -11,7 +11,7 @@ ALGORITHM = "HS256"  # Algoritma signing
 ACCESS_TOKEN_EXPIRE_DAYS = 1
 
 
-def create_jwt(username: str) -> str:
+def create_token(username: str) -> str:
     """
         Membuat JWT Token
     """
@@ -30,11 +30,10 @@ def create_jwt(username: str) -> str:
         token = jwt.encode(header, payload, SECRET_KEY)
         return token.decode('utf-8')
     except JoseError as e:
-        print(f"Error encoding token: {e}")
-        return None
+        return "Error"
 
 
-def decode_jwt(token: str) -> dict | None:
+def decode_token(token: str) -> dict | None:
     try:
         payload = jwt.decode(token, SECRET_KEY)
         
