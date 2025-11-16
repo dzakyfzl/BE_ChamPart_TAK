@@ -5,6 +5,6 @@ simpan = Table(
     'Simpan',
     Base.metadata,
     Column('idPengguna', Integer, ForeignKey('Pengguna.idPengguna'), primary_key=True),
-    Column('idKegiatan', Integer, ForeignKey('kegiatan.idKegiatan'), primary_key=True),
+    Column('idKegiatan', Integer, ForeignKey('Kegiatan.idKegiatan'), primary_key=True),
     Column('waktu', DateTime, nullable=False)
 )

@@ -5,5 +5,5 @@ minatKegiatan = Table(
     'minatKegiatan',
     Base.metadata,
     Column('idMinat', Integer, ForeignKey('Minat.idMinat'), primary_key=True),
-    Column('idKegiatan', Integer, ForeignKey('kegiatan.idKegiatan'), primary_key=True)
+    Column('idKegiatan', Integer, ForeignKey('Kegiatan.idKegiatan'), primary_key=True)
 )
