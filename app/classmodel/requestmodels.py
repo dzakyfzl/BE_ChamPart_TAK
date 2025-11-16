@@ -12,9 +12,21 @@ class JSONPengguna(JSONAccount):
 
 class JSONAdminInstansi(JSONAccount):
     jabatan: str
+    idInstansi: int
+    passkey:str
 
 class JSONAdminPengawas(JSONAccount):
     jabatan: str
+
+class JSONCalonInstansi(BaseModel):
+    nama: str
+    jenis: str
+    alamat: str
+    email_pengaju: str
+
+class JSONMinatBakat(BaseModel):
+    minat: list[int]
+    bakat: list[int]
 
 
     

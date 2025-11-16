@@ -40,5 +40,4 @@ def decode_token(token: str) -> dict | None:
         return payload
     
     except JoseError as e:
-        print(f"Token invalid: {e}")
         return None
