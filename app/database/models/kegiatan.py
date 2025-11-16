@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database.database import Base
+from .minatKegiatan import minatKegiatan
+from .bakatKegiatan import bakatKegiatan
 
 class Kegiatan(Base):
     __tablename__ = "Kegiatan"
@@ -18,10 +20,12 @@ class Kegiatan(Base):
     idInstansi = Column(Integer, ForeignKey('Instansi.idInstansi'), nullable=False)
     idLampiran = Column(Integer, ForeignKey('Lampiran.idLampiran'), nullable=False)
     
-    admin_pengawas = relationship("AdminPengawas", backref="Kegiatan")
-    admin_instansi = relationship("AdminInstansi", backref="Kegiatan")
-    instansi = relationship("Instansi", backref="Kegiatan")
-    lampiran = relationship("Lampiran", backref="Kegiatan")
-    
+    admin_pengawas = relationship("AdminPengawas", backref="kegiatan")
+    admin_instansi = relationship("AdminInstansi", backref="kegiatan")
+    instansi = relationship("Instansi", backref="kegiatan")
+    lampiran = relationship("Lampiran", backref="kegiatan")
+    minat_list = relationship("Minat", secondary=minatKegiatan, backref="kegiatan_list")
+    bakat_list = relationship("Bakat", secondary=bakatKegiatan, backref="kegiatan_list")
+
     def __repr__(self):
         return f"<Kegiatan(idKegiatan={self.idKegiatan}, nama='{self.nama}')>"

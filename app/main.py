@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, text, func
 from .database.database import get_db
 from .database.database import Base, engine
+
 from .database.models.bakat import Bakat
 from .database.models.pengguna import Pengguna
 from .database.models.lampiran import Lampiran
@@ -15,6 +16,8 @@ from .classmodel.requestmodels import JSONPengguna, JSONAdminPengawas
 from .auth.jwt_auth import create_token,decode_token
 import os
 import hashlib
+
+
 
 app = FastAPI()
 

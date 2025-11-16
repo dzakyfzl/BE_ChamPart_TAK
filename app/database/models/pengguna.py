@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 from .minatPengguna import minatPengguna
+from .bakatPengguna import bakatPengguna
+from .simpan import simpan
 
 class Pengguna(Base):
     __tablename__ = "Pengguna"
@@ -18,6 +20,9 @@ class Pengguna(Base):
   
     lampiran = relationship("Lampiran", backref="pengguna")
     minat_list = relationship("Minat", secondary=minatPengguna, backref="pengguna_list")
+    bakat_list = relationship("Bakat", secondary=bakatPengguna, backref="pengguna_list")
+    kegiatan_simpan = relationship("Kegiatan", secondary=simpan, backref="pengguna_simpan")
+
 
     def __repr__(self):
         return f"<Pengguna(idPengguna={self.idPengguna}, nama='{self.nama}')>"
