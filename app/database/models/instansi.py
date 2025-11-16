@@ -9,7 +9,7 @@ class Instansi(Base):
     nama = Column(String(100), nullable=False)
     jenis = Column(String(50), nullable=False)
     alamat = Column(String(255), nullable=False)
-    idLampiran = Column(Integer, ForeignKey('lampiran.idLampiran'), nullable=False)
+    idLampiran = Column(Integer, ForeignKey('Lampiran.idLampiran'), nullable=True)
 
     lampiran = relationship("Lampiran", backref="instansi")
     
