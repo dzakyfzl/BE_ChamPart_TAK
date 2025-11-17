@@ -5,6 +5,11 @@ class JSONAccount(BaseModel):
     email: str
     password: str
 
+class JSONLogin(BaseModel):
+    email: str
+    password: str
+    role: str
+
 class JSONPengguna(JSONAccount):
     no_telp: str
     prodi: str
@@ -28,5 +33,14 @@ class JSONMinatBakat(BaseModel):
     minat: list[int]
     bakat: list[int]
 
+class JSONApproveInstansi(BaseModel):
+    idCalonInstansi: int
+    isApproved: bool
+
+class JSONApproveAdmin(BaseModel):
+    email: str
+    unique_character: str
+    idInstansi: int
+    isApproved: bool
 
     
