@@ -11,7 +11,7 @@ ALGORITHM = "HS256"  # Algoritma signing
 ACCESS_TOKEN_EXPIRE_DAYS = 1
 
 
-def create_token(username: str) -> str:
+def create_token(username: str, role: str) -> str:
     """
         Membuat JWT Token
     """
@@ -23,7 +23,8 @@ def create_token(username: str) -> str:
     payload = {
         "sub": username,  
         "iat": int(time.time()),      
-        "exp": int(expire.timestamp()) 
+        "exp": int(expire.timestamp()),
+        "role":role
     }
     header = {"alg": ALGORITHM}
     try:
@@ -40,5 +41,4 @@ def decode_token(token: str) -> dict | None:
         return payload
     
     except JoseError as e:
-        print(f"Token invalid: {e}")
         return None
