@@ -6,3 +6,4 @@ cryptography==43.0.3
 python-dotenv==1.0.1
 authlib==1.6.5
 python-multipart==0.0.20
+email_validator==2.3.0
