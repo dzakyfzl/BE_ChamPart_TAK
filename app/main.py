@@ -272,7 +272,7 @@ def register_adminP(admin :JSONAdminPengawas, response:Response, db:Session = De
 
     # Sukses
     return {"message":"akun telah dibuat","token":access_token}
-
+sadasdadadad
 @app.post('/register/admin/instansi',status_code=200)
 def register_adminI(admin :JSONAdminInstansi, response:Response, db:Session = Depends(get_db)):
     # Validasi Email
