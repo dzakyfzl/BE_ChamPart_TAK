@@ -11,9 +11,9 @@ class AdminPengawas(Base):
     jabatan = Column(String(100), nullable=False)
     salt = Column(Text, nullable=False)
     hashed_password = Column(Text, nullable=False)
-    idLampiran = Column(Integer, ForeignKey('lampiran.idLampiran'), nullable=False)
+    idLampiran = Column(Integer, ForeignKey('Lampiran.idLampiran'), nullable=True)
     
-    lampiran = relationship("Lampiran", backref="admin_pengawas")
+    lampiran = relationship("Lampiran", backref="AdminPengawas")
     
     def __repr__(self):
         return f"<AdminPengawas(idAdminPengawas={self.idAdminPengawas}, nama='{self.nama}')>"

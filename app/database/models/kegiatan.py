@@ -5,7 +5,7 @@ from .minatKegiatan import minatKegiatan
 from .bakatKegiatan import bakatKegiatan
 
 class Kegiatan(Base):
-    __tablename__ = "kegiatan"
+    __tablename__ = "Kegiatan"
 
     idKegiatan = Column(Integer, primary_key=True, autoincrement=True)
     nama = Column(String(100), nullable=False)
@@ -15,10 +15,10 @@ class Kegiatan(Base):
     TAK_wajib = Column(Boolean, nullable=False)
     status_kegiatan = Column(String(50), nullable=False)
     waktuDiupload = Column(DateTime, nullable=False)
-    idAdminPengawas = Column(Integer, ForeignKey('adminpengawas.idAdminPengawas'), nullable=False)
-    idAdminInstansi = Column(Integer, ForeignKey('admininstansi.idAdminInstansi'), nullable=False)
-    idInstansi = Column(Integer, ForeignKey('instansi.idInstansi'), nullable=False)
-    idLampiran = Column(Integer, ForeignKey('lampiran.idLampiran'), nullable=False)
+    idAdminPengawas = Column(Integer, ForeignKey('AdminPengawas.idAdminPengawas'), nullable=False)
+    idAdminInstansi = Column(Integer, ForeignKey('AdminInstansi.idAdminInstansi'), nullable=False)
+    idInstansi = Column(Integer, ForeignKey('Instansi.idInstansi'), nullable=False)
+    idLampiran = Column(Integer, ForeignKey('Lampiran.idLampiran'), nullable=False)
     
     admin_pengawas = relationship("AdminPengawas", backref="kegiatan")
     admin_instansi = relationship("AdminInstansi", backref="kegiatan")
