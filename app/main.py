@@ -13,10 +13,8 @@ from .routers import (
     approve, 
     kegiatan, 
     minat,
+    bakat,
 )
-
-from .database.models.minat import Minat
-from .database.models.bakat import Bakat
 
 Base.metadata.create_all(bind=engine)
 
@@ -48,6 +46,7 @@ app.include_router(auth.router)
 app.include_router(approve.router)
 app.include_router(kegiatan.router) 
 app.include_router(minat.router)
+app.include_router(bakat.router)
 
 
 @app.get("/", status_code=200)
