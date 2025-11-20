@@ -13,3 +13,6 @@ class JSONLogin(BaseModel):
 class JSONUpdatePassword(BaseModel):
     password_lama: str
     password_baru: str
+
+class JSONPassword(BaseModel):
+    password: str

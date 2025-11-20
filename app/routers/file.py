@@ -2,7 +2,7 @@ from fastapi import APIRouter, Response, status, Depends,File,UploadFile
 from fastapi.responses import FileResponse
 from typing import Annotated
 from sqlalchemy.orm import Session
-from sqlalchemy import insert, select, text, func, delete, update
+from sqlalchemy import and_, insert, select, text, func, delete, update
 
 from ..database.database import get_db
 
@@ -14,18 +14,17 @@ from ..depedency import validate_token
 import os
 import shutil
 import datetime
-from ..classmodel.file import JSONGetFile
 
 router = APIRouter(
     prefix="/file",
     tags=["File"]
 )
 
-@router.get("/get",status_code=200)
-async def create_file(response:Response,request:JSONGetFile,user: Annotated[dict,Depends(validate_token)], db:Session = Depends(get_db)):
+@router.get("/get/{id}",status_code=200)
+async def dapatkan_file(id:str,response:Response,user: Annotated[dict,Depends(validate_token)], db:Session = Depends(get_db)):
     query = None
     try:
-        query = db.execute(select(Lampiran.nama, Lampiran.folder,Lampiran.jenis,Lampiran.ukuran).select_from(Lampiran).where(Lampiran.idLampiran==request.idLampiran)).first()
+        query = db.execute(select(Lampiran.nama, Lampiran.folder,Lampiran.jenis,Lampiran.ukuran).select_from(Lampiran).where(Lampiran.idLampiran==id)).first()
     except Exception as e:
         print("ERROR : ",e)
         response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -148,8 +147,8 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
     
     return {"messsage": "file berhasil dikirimkan"}
 
-@router.post("/upload/kegiatan",status_code=200)
-async def create_upload_file(user: Annotated[dict,Depends(validate_token)],response: Response,file: UploadFile, db:Session = Depends(get_db)):
+@router.post("/upload/kegiatan/{id}",status_code=200)
+async def create_upload_file(id:int,user: Annotated[dict,Depends(validate_token)],response: Response,file: UploadFile, db:Session = Depends(get_db)):
     query = None
     query2 = None 
     
@@ -165,7 +164,7 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
         return {"message":"anda bukan admin instansi"}
     
     try:
-        query = db.execute(select(AdminInstansi.idInstansi).where(AdminInstansi.username==user["username"])).first()
+        query = db.execute(select(Kegiatan.idInstansi).join_from(Instansi,AdminInstansi).join_from(Instansi,Kegiatan).where(and_(AdminInstansi.username==user["username"],Kegiatan.idKegiatan==id))).first()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -175,7 +174,7 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"message":"anda bukan admin instansi"}
     
-    file.filename = user["username"] + "_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
+    file.filename = str(id) + "_KEGIATAN_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
     filepath = os.path.join("/media", file.filename)
     try:
         with open(filepath, "wb+") as file_object:
@@ -199,7 +198,7 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
         return {"message":"error pada sambungan database"}
 
     try:
-        db.execute(update(Instansi).where(Instansi.idInstansi==query[0]).values(idLampiran=query2[0]))
+        db.execute(update(Kegiatan).where(Kegiatan.idKegiatan==id).values(idLampiran=query2[0]))
         db.commit()
     except Exception as e:
         print(f"ERROR : {e}")

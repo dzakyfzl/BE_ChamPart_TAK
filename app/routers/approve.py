@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
-from sqlalchemy import insert, select, delete
+from sqlalchemy import and_, insert, select, delete, update
 
 from ..database.database import get_db
 
@@ -16,7 +16,7 @@ router = APIRouter(
     tags=["Approval"]
 )
 
-@router.post('/instansi',status_code=200)
+@router.post('/instansi/baru',status_code=200)
 def approve_pendaftaran_instansi(request: JSONApproveInstansi,user: Annotated[dict, Depends(validate_token)], response : Response, db:Session = Depends(get_db)):
     if user["role"] != "AdminPengawas":
         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -24,7 +24,7 @@ def approve_pendaftaran_instansi(request: JSONApproveInstansi,user: Annotated[di
     
     query = None
     try:
-        query = db.execute(select(CalonInstansi.nama,CalonInstansi.jenis,CalonInstansi.alamat,CalonInstansi.email_pengaju).select_from(CalonInstansi).where(CalonInstansi.idCalonInstansi==request.idCalonInstansi)).first()
+        query = db.execute(select(CalonInstansi.nama,CalonInstansi.jenis,CalonInstansi.alamat,CalonInstansi.email_pengaju).select_from(CalonInstansi).where(and_(CalonInstansi.idCalonInstansi==request.idCalonInstansi,CalonInstansi.jenis_calon=="baru"))).first()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -43,6 +43,51 @@ def approve_pendaftaran_instansi(request: JSONApproveInstansi,user: Annotated[di
             return {"message":"error pada sambungan database"}
     else:
         message = {"message":f"Instansi {query[0]} berhasil di reject"}
+        
+    try:
+        db.execute(delete(CalonInstansi).where(CalonInstansi.idCalonInstansi==request.idCalonInstansi))
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+
+    try:
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+
+    return message
+
+@router.post('/instansi/edit',status_code=200)
+def approve_pendaftaran_instansi(request: JSONApproveInstansi,user: Annotated[dict, Depends(validate_token)], response : Response, db:Session = Depends(get_db)):
+    if user["role"] != "AdminPengawas":
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {"message":"anda tidak dapat mengunakan layanan ini"}
+    
+    query = None
+    try:
+        query = db.execute(select(CalonInstansi.nama,CalonInstansi.jenis,CalonInstansi.alamat,CalonInstansi.email_pengaju).select_from(CalonInstansi).where(and_(CalonInstansi.idCalonInstansi==request.idCalonInstansi,CalonInstansi.jenis_calon=="edit"))).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    if not query:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"message":"instansi tidak ada pada daftar edit"}
+    
+    message = {"message":f"Pengajuan edit Instansi {query[0]} berhasil di approve"}
+    if request.isApproved:
+        try:
+            query2 = db.execute(select(AdminInstansi.idInstansi).where(AdminInstansi.email==query[3])).first()
+            db.execute(update(Instansi).where(Instansi.idInstansi==query2[0]).values(nama=query[0],jenis=query[1],alamat=query[2]))
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message":"error pada sambungan database"}
+    else:
+        message = {"message":f"Pengajuan edit Instansi {query[0]} berhasil di reject"}
         
     try:
         db.execute(delete(CalonInstansi).where(CalonInstansi.idCalonInstansi==request.idCalonInstansi))
