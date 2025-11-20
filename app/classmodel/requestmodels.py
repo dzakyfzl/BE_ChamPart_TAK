@@ -43,4 +43,15 @@ class JSONApproveAdmin(BaseModel):
     idInstansi: int
     isApproved: bool
 
-    
+class JSONKegiatan(BaseModel):
+    nama: str
+    deskripsi: str
+    waktu: str  # ISO datetime string
+    nominal_TAK: int
+    TAK_wajib: bool
+    idLampiran: int
+    idAdminPengawas: int | None = None
+
+
+class JSONChangeStatus(BaseModel):
+    status: str
