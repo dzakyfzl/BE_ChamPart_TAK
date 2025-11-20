@@ -9,7 +9,7 @@ class Pengguna(Base):
     __tablename__ = "Pengguna"
 
     idPengguna = Column(Integer, primary_key=True, autoincrement=True)
-    nama = Column(String(100), nullable=False)
+    username = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False)
     no_telp = Column(String(15), nullable=False)
     fakultas = Column(String(100), nullable=False)
@@ -25,4 +25,4 @@ class Pengguna(Base):
 
 
     def __repr__(self):
-        return f"<Pengguna(idPengguna={self.idPengguna}, nama='{self.nama}')>"
+        return f"<Pengguna(idPengguna={self.idPengguna}, username='{self.username}')>"

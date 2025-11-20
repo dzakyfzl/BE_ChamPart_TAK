@@ -6,7 +6,7 @@ class AdminInstansi(Base):
     __tablename__ = "AdminInstansi"
 
     idAdminInstansi = Column(Integer, primary_key=True, autoincrement=True)
-    nama = Column(String(100), nullable=False)
+    username = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False)
     jabatan = Column(String(100), nullable=False)
     salt = Column(Text, nullable=False)
@@ -18,4 +18,4 @@ class AdminInstansi(Base):
     lampiran = relationship("Lampiran", backref="AdminInstansi")
     
     def __repr__(self):
-        return f"<AdminInstansi(idAdminInstansi={self.idAdminInstansi}, nama='{self.nama}')>"
+        return f"<AdminInstansi(idAdminInstansi={self.idAdminInstansi}, username='{self.username}')>"

@@ -1,11 +1,15 @@
 from pydantic import BaseModel
 
 class JSONAccount(BaseModel):
-    nama: str
+    username: str
     email: str
     password: str
 
 class JSONLogin(BaseModel):
-    email: str
+    username: str
     password: str
     role: str
+
+class JSONUpdatePassword(BaseModel):
+    password_lama: str
+    password_baru: str
