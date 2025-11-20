@@ -161,8 +161,8 @@ def show_approved_kegiatan(db: Session = Depends(get_db)):
         data.append(serialize_kegiatan(k))
     return {"kegiatan": data}
 
-
-@router.get('/all',status_code=200)
+# showall kegiatan
+@router.get('kegiatan/showAll',status_code=200)
 def show_all_kegiatan(db: Session = Depends(get_db)):
     try:
         rows = db.execute(select(Kegiatan)).all()
