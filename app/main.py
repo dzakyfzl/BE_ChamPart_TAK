@@ -9,11 +9,12 @@ from .depedency import validate_token
 from contextlib import asynccontextmanager
 
 from .routers import (
-    auth, 
+    account, 
     approve, 
     kegiatan, 
     minat,
     bakat,
+    file,
 )
 
 Base.metadata.create_all(bind=engine)
@@ -42,13 +43,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(auth.router)
+app.include_router(account.router)
 app.include_router(approve.router)
 app.include_router(kegiatan.router) 
 app.include_router(minat.router)
 app.include_router(bakat.router)
+app.include_router(file.router)
 
 
-@app.get("/", status_code=200)
+@app.get("/test", status_code=200)
 def test(user: Annotated[dict, Depends(validate_token)]):
     return {"message": "Yahhoo~! token-mu valid", "user": user}
