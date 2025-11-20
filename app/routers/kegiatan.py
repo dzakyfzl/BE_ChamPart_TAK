@@ -13,17 +13,6 @@ from ..depedency import validate_token
 
 router = APIRouter(prefix="/kegiatan", tags=["Kegiatan"])
 
-@router.get("/", response_model=List[JSONKegiatanResponse])
-def get_all_kegiatan(
-    user: Annotated[dict, Depends(validate_token)],  
-    db: Session = Depends(get_db)
-):
-    Kegiatan_list = db.query(Kegiatan).all()
-    if not Kegiatan_list:
-        return []
-
-    return Kegiatan_list
-
 # upload kegiatan
 @router.post('/upload',status_code=200)
 def upload_kegiatan(request: JSONKegiatan, user: Annotated[dict, Depends(validate_token)], response: Response, db: Session = Depends(get_db)):
@@ -147,7 +136,7 @@ def serialize_kegiatan(obj: Kegiatan) -> dict:
 
 
 # show kegiatan berdasarkan status_kegiatan yang sudah Approved
-@router.get('/showApprovec',status_code=200)
+@router.get('/showApproved',status_code=200)
 def show_approved_kegiatan(db: Session = Depends(get_db)):
     try:
         rows = db.execute(select(Kegiatan).where(Kegiatan.status_kegiatan=='Approved')).all()
@@ -161,9 +150,13 @@ def show_approved_kegiatan(db: Session = Depends(get_db)):
         data.append(serialize_kegiatan(k))
     return {"kegiatan": data}
 
-# showall kegiatan
-@router.get('kegiatan/showAll',status_code=200)
-def show_all_kegiatan(db: Session = Depends(get_db)):
+# showall kegiatan hanya bisa oleh AdminPengawas
+@router.get('/kegiatan/showAll',status_code=200)
+def show_all_kegiatan(user: Annotated[dict, Depends(validate_token)], db: Session = Depends(get_db)):
+    # hanya AdminPengawas yang dapat mengakses
+    if user["role"] != "AdminPengawas":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="anda tidak dapat mengunakan layanan ini")
+
     try:
         rows = db.execute(select(Kegiatan)).all()
     except Exception as e:
@@ -173,8 +166,7 @@ def show_all_kegiatan(db: Session = Depends(get_db)):
     data = []
     for r in rows:
         k = r[0]
-        data.append(serialize_kegiatan(k))
-    return {"kegiatan": data}
+    
 
 # edit kegiatan
 @router.put('/{id}/edit',status_code=200)
