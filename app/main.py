@@ -16,6 +16,11 @@ from .routers import (
     minat,
     bakat,
     file,
+    akunPengguna,
+    akunAdminPengawas,
+    akunAdminInstansi,
+    instansi,
+    calon,
 )
 
 Base.metadata.create_all(bind=engine)
@@ -45,13 +50,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(account.router)
-app.include_router(approve.router)
-app.include_router(kegiatan.router) 
+app.include_router(akunAdminInstansi.router)
+app.include_router(akunAdminPengawas.router)
+app.include_router(akunPengguna.router)
+app.include_router(instansi.router)
 app.include_router(minat.router)
 app.include_router(bakat.router)
+app.include_router(calon.router)
+app.include_router(approve.router)
+app.include_router(kegiatan.router) 
 app.include_router(file.router)
 
 
-@app.get("/test", status_code=200)
-def test(user: Annotated[dict, Depends(validate_token)]):
+@app.get("/", status_code=200,tags=["Verify Token"])
+def verifikasi_token(user: Annotated[dict, Depends(validate_token)]):
     return {"message": "Yahhoo~! token-mu valid", "user": user}

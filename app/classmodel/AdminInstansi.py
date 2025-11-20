@@ -11,3 +11,6 @@ class JSONCalonInstansi(BaseModel):
     jenis: str
     alamat: str
     email_pengaju: str
+
+class JSONCalonAdminInstansi(BaseModel):
+    email: str
