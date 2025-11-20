@@ -132,41 +132,7 @@ def serialize_kegiatan(obj: Kegiatan) -> dict:
         "idAdminInstansi": obj.idAdminInstansi,
         "idInstansi": obj.idInstansi,
         "idLampiran": obj.idLampiran
-    }
-
-
-# show kegiatan berdasarkan status_kegiatan yang sudah Approved
-@router.get('/showApproved',status_code=200)
-def show_approved_kegiatan(db: Session = Depends(get_db)):
-    try:
-        rows = db.execute(select(Kegiatan).where(Kegiatan.status_kegiatan=='Approved')).all()
-    except Exception as e:
-        print(f"ERROR : {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="error pada sambungan database")
-
-    data = []
-    for r in rows:
-        k = r[0]
-        data.append(serialize_kegiatan(k))
-    return {"kegiatan": data}
-
-# showall kegiatan hanya bisa oleh AdminPengawas
-@router.get('/kegiatan/showAll',status_code=200)
-def show_all_kegiatan(user: Annotated[dict, Depends(validate_token)], db: Session = Depends(get_db)):
-    # hanya AdminPengawas yang dapat mengakses
-    if user["role"] != "AdminPengawas":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="anda tidak dapat mengunakan layanan ini")
-
-    try:
-        rows = db.execute(select(Kegiatan)).all()
-    except Exception as e:
-        print(f"ERROR : {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="error pada sambungan database")
-
-    data = []
-    for r in rows:
-        k = r[0]
-    
+    }    
 
 # edit kegiatan
 @router.put('/{id}/edit',status_code=200)

@@ -9,6 +9,7 @@ class CalonInstansi(Base):
     jenis = Column(String(50), nullable=False)
     alamat = Column(String(255), nullable=False)
     email_pengaju = Column(String(255), nullable=False)
+    status = Column(String(50), nullable=False, default="baru")  # baru atau edit
     
     def __repr__(self):
         return f"<CalonInstansi(idCalonInstansi={self.idCalonInstansi}, nama={self.nama})>"
