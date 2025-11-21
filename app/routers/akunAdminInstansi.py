@@ -57,7 +57,7 @@ def register_adminI(admin :JSONAdminInstansi, response:Response, db:Session = De
     
     query = None
     try:
-        query = db.execute(select(Instansi.username).select_from(Instansi).where(Instansi.idInstansi==admin.idInstansi)).first()
+        query = db.execute(select(Instansi.nama).select_from(Instansi).where(Instansi.idInstansi==admin.idInstansi)).first()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

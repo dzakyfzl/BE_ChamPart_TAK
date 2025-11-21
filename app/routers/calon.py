@@ -26,7 +26,8 @@ def ambil_calon_admin_instansi(response:Response, user: Annotated[dict, Depends(
     data=[]
     query=None
     try:
-        query=db.execute(select(CalonAdminInstansi.idCalonAdminInstansi,CalonAdminInstansi.email,CalonAdminInstansi.idInstansi,Instansi.nama).join(CalonAdminInstansi,Instansi)).all()
+        stmt=select(CalonAdminInstansi.idCalonAdminInstansi,CalonAdminInstansi.email,CalonAdminInstansi.idInstansi)
+        query = db.execute(stmt).all()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -35,7 +36,7 @@ def ambil_calon_admin_instansi(response:Response, user: Annotated[dict, Depends(
         return {"message":"data calon admin instansi kosong"}
     
     for q in query:
-        data.append({"idCalonAdminInstansi":q[0],"email":q[1],"idInstansi":q[2],"nama_instansi":q[3]})
+        data.append({"idCalonAdminInstansi":q[0],"email":q[1],"idInstansi":q[2]})
 
     return {"message":"data calon admin instansi ditemukan","data":data}
 
