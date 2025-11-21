@@ -43,6 +43,51 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"messsage": "format salah, harap kirimkan foto yang benar"}
     
+    query_exist = None
+    try:
+        if user["role"] == 'Pengguna':
+            stmt = select(Pengguna.idLampiran).where(Pengguna.username==user["username"])
+        elif user["role"] == 'AdminInstansi':
+            stmt = select(AdminInstansi.idLampiran).where(AdminInstansi.username==user["username"])
+        elif user["role"] == 'AdminPengawas':
+            stmt = select(AdminPengawas.idLampiran).where(AdminPengawas.username==user["username"])
+        else:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {"message":"akun di role ini tidak ditemukan"}
+        
+        query_exist = db.execute(stmt).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    
+    if query_exist[0]:
+        query_file_exist = db.execute(select(Lampiran.nama,Lampiran.folder).where(Lampiran.idLampiran==query_exist[0])).first()
+        try:
+            os.remove(path=query_file_exist[1])
+        except Exception as e:
+            print("ERROR : ",e)
+            response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "error menghapus file"}
+        try:
+            if user["role"] == 'Pengguna':
+                stmt = update(Pengguna).where(Pengguna.username==user["username"]).values(idLampiran=None)
+            elif user["role"] == 'AdminInstansi':
+                stmt = update(AdminInstansi).where(AdminInstansi.username==user["username"]).values(idLampiran=None)
+            elif user["role"] == 'AdminPengawas':
+                stmt = update(AdminPengawas).where(AdminPengawas.username==user["username"]).values(idLampiran=None)
+            else:
+                response.status_code = status.HTTP_400_BAD_REQUEST
+                return {"message":"akun di role ini tidak ditemukan"}
+            db.execute(stmt)
+            db.execute(delete(Lampiran).where(Lampiran.idLampiran==query_exist[0]))
+            db.commit()
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message":"error pada sambungan database"}
+        
+    
     file.filename = user["username"] + "_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
     filepath = os.path.join("/media", file.filename)
     try:
@@ -114,7 +159,32 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"message":"anda bukan admin instansi"}
     
-    file.filename = user["username"] + "_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
+    query_exist = None
+    try:
+        query_exist = db.execute(select(Instansi.idLampiran).where(Instansi.idInstansi==query[0])).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    
+    if query_exist[0]:
+        query_file_exist = db.execute(select(Lampiran.nama,Lampiran.folder).where(Lampiran.idLampiran==query_exist[0])).first()
+        try:
+            os.remove(path=query_file_exist[1])
+        except Exception as e:
+            print("ERROR : ",e)
+            response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "error menghapus file"}
+        try:
+            db.execute(update(Instansi).where(Instansi.idInstansi==query[0]).values(idLampiran=None))
+            db.execute(delete(Lampiran).where(Lampiran.idLampiran==query_exist[0]))
+            db.commit()
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message":"error pada sambungan database"}
+    
+    file.filename = str(query[0]) + "_INSTANSI_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
     filepath = os.path.join("/media", file.filename)
     try:
         with open(filepath, "wb+") as file_object:
@@ -173,6 +243,32 @@ async def create_upload_file(id:int,user: Annotated[dict,Depends(validate_token)
     if not query[0]:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"message":"anda bukan admin instansi"}
+    
+    query_exist = None
+    try:
+        query_exist = db.execute(select(Kegiatan.idLampiran).where(Kegiatan.idKegiatan==id)).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    
+    if query_exist[0]:
+        query_file_exist = db.execute(select(Lampiran.nama,Lampiran.folder).where(Lampiran.idLampiran==query_exist[0])).first()
+        try:
+            shutil.rmtree(path=query_file_exist[1])
+        except Exception as e:
+            print("ERROR : ",e)
+            response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "error menghapus file"}
+        try:
+            db.execute(update(Kegiatan).where(Kegiatan.idKegiatan==id).values(idLampiran=None))
+            db.execute(delete(Lampiran).where(Lampiran.idLampiran==query_exist[0]))
+            db.commit()
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message":"error pada sambungan database"}
+    
     
     file.filename = str(id) + "_KEGIATAN_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
     filepath = os.path.join("/media", file.filename)

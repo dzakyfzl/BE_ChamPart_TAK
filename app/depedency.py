@@ -51,5 +51,3 @@ async def validate_token(credentials: Annotated[str, Depends(security)],db: Sess
     
     
     return user
-        
-

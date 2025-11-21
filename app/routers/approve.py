@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Response, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, insert, select, delete, update
+from sqlalchemy import and_, exists, insert, select, delete, update
+
+from app.database.models.calonAdminInstansi import CalonAdminInstansi
 
 from ..database.database import get_db
 
@@ -135,5 +137,12 @@ def approve_pendaftaran_instansi(request: JSONApproveAdmin,user: Annotated[dict,
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return {"message":"error pada sambungan database"}
         message = {"message":f"sukses mengapprove {request.email} dari instansi {query[0]}","passkey":request.unique_character}
+    try:
+        db.execute(exists().delete(CalonAdminInstansi).where(email=request.email))
+        db.commit()
+    except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message":"error pada sambungan database"}
 
     return message

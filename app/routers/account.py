@@ -66,6 +66,7 @@ def login(akun:JSONLogin, response:Response,db:Session = Depends(get_db)):
     
 @router.get("/get", status_code=200)
 def info_akun(response:Response, user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
+    query2=None
     try:
         if user["role"] == "Pengguna":
             query = db.execute(select(Pengguna.email,Pengguna.no_telp,Pengguna.fakultas,Pengguna.prodi).select_from(Pengguna).where(Pengguna.username==user['username'])).first()
@@ -73,7 +74,7 @@ def info_akun(response:Response, user: Annotated[dict, Depends(validate_token)],
             query = db.execute(select(AdminPengawas.email,AdminPengawas.jabatan).select_from(AdminPengawas).where(AdminPengawas.username==user['username'])).first()
         elif user["role"] == "AdminInstansi":
             query = db.execute(select(AdminInstansi.email,AdminInstansi.jabatan,AdminInstansi.idInstansi).select_from(AdminInstansi).where(AdminInstansi.username==user['username'])).first()
-            query2 = db.execute(select(Instansi.nama).select_from(Instansi).where(Instansi.idInstansi==query[2]))
+            query2 = db.execute(select(Instansi.nama).select_from(Instansi).where(Instansi.idInstansi==query[2])).first()
         else:
             response.status_code = status.HTTP_400_BAD_REQUEST,
             return {"message":"role tidak valid"}
@@ -85,6 +86,7 @@ def info_akun(response:Response, user: Annotated[dict, Depends(validate_token)],
     if not query and not query2:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message":"user tidak ditemukan"}
+    print(query2)
     
     if user["role"] == "Pengguna":
         return {"username":user["username"],"email":query[0],"no_telp":query[1],"fakultas":query[2],"prodi":query[3]}
