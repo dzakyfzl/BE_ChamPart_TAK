@@ -124,7 +124,7 @@ def edit_akun_admin_instansi(admin:JSONAdminInstansi, response:Response, user: A
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
-    if existing_account[0][0] != 0:
+    if existing_account[0][0] != 1:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message":"username sudah ada, silahkan coba yang lain"}
 
@@ -174,4 +174,35 @@ def ajukan_akun_admin_instansi_baru(request:JSONCalonAdminInstansi, response:Res
         return {"message":"error pada sambungan database"}
     
     return {"message":f"akun dengan email {request.email} telah berhasil diajukan, kami akan mengirimkan email kepada email yang bersangkutan"}
+
+@router.get("/get-instansi",status_code=200)
+def inikah_my_instansi(response:Response,user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
+    query = None
+    query2 = None
+    
+    if user["role"] != "AdminInstansi":
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {"message":"anda tidak dapat mengunakan layanan ini"}
+    
+    try:
+        query2 = db.execute(select(AdminInstansi.idInstansi).where(AdminInstansi.username==user["username"])).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    if not query2:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {"message":"anda bukan admin dari instansi manapun"}
+    
+    try:
+        query = db.execute(select(Instansi.nama,Instansi.alamat,Instansi.jenis).where(Instansi.idInstansi==query2[0])).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    if not query:
+        return{"message":"Instansi kosong"}
+
+
+    return {"message":"data instansi berhasil diperoleh", "data":{"nama":query[0],"alamat":query[1],"jenis":query[2]}}
 

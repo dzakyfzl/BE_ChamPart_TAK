@@ -26,7 +26,7 @@ def ambil_calon_admin_instansi(response:Response, user: Annotated[dict, Depends(
     data=[]
     query=None
     try:
-        stmt=select(CalonAdminInstansi.idCalonAdminInstansi,CalonAdminInstansi.email,CalonAdminInstansi.idInstansi)
+        stmt=select(CalonAdminInstansi.idCalonAdminInstansi,CalonAdminInstansi.email,CalonAdminInstansi.idInstansi,Instansi.nama).join(CalonAdminInstansi)
         query = db.execute(stmt).all()
     except Exception as e:
         print(f"ERROR : {e}")
@@ -36,7 +36,7 @@ def ambil_calon_admin_instansi(response:Response, user: Annotated[dict, Depends(
         return {"message":"data calon admin instansi kosong"}
     
     for q in query:
-        data.append({"idCalonAdminInstansi":q[0],"email":q[1],"idInstansi":q[2]})
+        data.append({"idCalonAdminInstansi":q[0],"email":q[1],"idInstansi":q[2],"namaInstansi":q[3]})
 
     return {"message":"data calon admin instansi ditemukan","data":data}
 

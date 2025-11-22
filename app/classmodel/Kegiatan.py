@@ -8,9 +8,6 @@ class KegiatanBase(BaseModel):
     waktu: datetime
     nominal_TAK: int
     TAK_wajib: bool
-    status_kegiatan: str
-    idAdminPengawas: int
-    idAdminInstansi: int
     idInstansi: int
     idLampiran: int
 
@@ -45,3 +42,6 @@ class JSONKegiatanDetail(JSONKegiatanResponse):
     
     class Config:
         orm_mode = True
+
+class JSONChangeStatus(BaseModel):
+    status: str

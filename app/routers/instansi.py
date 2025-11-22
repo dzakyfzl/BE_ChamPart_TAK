@@ -61,3 +61,20 @@ def ajukan_edit_instansi(instansi:JSONCalonInstansi,response:Response,user: Anno
         return {"message":"error pada sambungan database"}
 
     return {"message":"instansi berhasil diajukan,tunggu hingga diapprove"}
+
+@router.get("/get-all",status_code=200)
+def data_semua_instansi(response:Response,user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
+    query = None
+    data = []
+    try:
+        query = db.execute(select(Instansi.nama,Instansi.alamat,Instansi.jenis)).all()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    if not query:
+        return{"message":"Instansi kosong"}
+    for q in query:
+        data.append({"nama":q[0],"alamat":q[1],"jenis":q[2]})
+
+    return {"message":"data instansi berhasil diperoleh", "data":data}

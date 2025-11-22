@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response, status, Depends
-from typing import Annotated
+from typing import Annotated, List
 from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, text, func, delete, update
 

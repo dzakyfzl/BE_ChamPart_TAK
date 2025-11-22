@@ -30,7 +30,14 @@ async def dapatkan_file(id:str,response:Response,user: Annotated[dict,Depends(va
         response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": "masalah pada sambungan database"}
     
-    return FileResponse(path=query[1],media_type=query[2],headers={"Content-Disposition": "inline"},filename=query[0])
+    try:
+        output =  FileResponse(path=query[1],media_type=query[2],headers={"Content-Disposition": "inline"},filename=query[0])
+    except Exception as e:
+        print("ERROR : ",e)
+        response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": "file rusak atau tidak ada"}
+    
+    return output
 
 
 @router.post("/upload/account",status_code=200)
@@ -217,8 +224,8 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
     
     return {"messsage": "file berhasil dikirimkan"}
 
-@router.post("/upload/kegiatan/{id}",status_code=200)
-async def create_upload_file(id:int,user: Annotated[dict,Depends(validate_token)],response: Response,file: UploadFile, db:Session = Depends(get_db)):
+@router.post("/upload/kegiatan",status_code=200)
+async def create_upload_file(user: Annotated[dict,Depends(validate_token)],response: Response,file: UploadFile, db:Session = Depends(get_db)):
     query = None
     query2 = None 
     
@@ -233,44 +240,8 @@ async def create_upload_file(id:int,user: Annotated[dict,Depends(validate_token)
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"message":"anda bukan admin instansi"}
     
-    try:
-        query = db.execute(select(Kegiatan.idInstansi).join_from(Instansi,AdminInstansi).join_from(Instansi,Kegiatan).where(and_(AdminInstansi.username==user["username"],Kegiatan.idKegiatan==id))).first()
-    except Exception as e:
-        print(f"ERROR : {e}")
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message":"error pada sambungan database"}
     
-    if not query[0]:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return {"message":"anda bukan admin instansi"}
-    
-    query_exist = None
-    try:
-        query_exist = db.execute(select(Kegiatan.idLampiran).where(Kegiatan.idKegiatan==id)).first()
-    except Exception as e:
-        print(f"ERROR : {e}")
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message":"error pada sambungan database"}
-    
-    if query_exist[0]:
-        query_file_exist = db.execute(select(Lampiran.nama,Lampiran.folder).where(Lampiran.idLampiran==query_exist[0])).first()
-        try:
-            shutil.rmtree(path=query_file_exist[1])
-        except Exception as e:
-            print("ERROR : ",e)
-            response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            return {"message": "error menghapus file"}
-        try:
-            db.execute(update(Kegiatan).where(Kegiatan.idKegiatan==id).values(idLampiran=None))
-            db.execute(delete(Lampiran).where(Lampiran.idLampiran==query_exist[0]))
-            db.commit()
-        except Exception as e:
-            print(f"ERROR : {e}")
-            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return {"message":"error pada sambungan database"}
-    
-    
-    file.filename = str(id) + "_KEGIATAN_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
+    file.filename = "KEGIATAN_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
     filepath = os.path.join("/media", file.filename)
     try:
         with open(filepath, "wb+") as file_object:
@@ -282,7 +253,7 @@ async def create_upload_file(id:int,user: Annotated[dict,Depends(validate_token)
     finally:
         await file.close()
 
-    
+    query2 = None
     try:
         db.execute(insert(Lampiran).values(nama=file.filename,jenis=file.content_type,ukuran=file.size,folder=filepath))
         db.commit()
@@ -301,4 +272,4 @@ async def create_upload_file(id:int,user: Annotated[dict,Depends(validate_token)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
     
-    return {"messsage": "file berhasil dikirimkan"}
+    return {"messsage": "file berhasil dikirimkan","idLampiran":query2[0]}
