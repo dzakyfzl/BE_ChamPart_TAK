@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Response, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, exists, insert, select, delete, update
+from sqlalchemy import and_, exists, insert, select, delete, text, update
 
+from app.classmodel.Kegiatan import JSONChangeStatus
 from app.database.models.calonAdminInstansi import CalonAdminInstansi
 
 from ..database.database import get_db
@@ -131,14 +132,13 @@ def approve_pendaftaran_instansi(request: JSONApproveAdmin,user: Annotated[dict,
 
         try:
             db.execute(insert(Passkey).values(isiPasskey=hashed_passkey,idInstansi=request.idInstansi))
-            db.commit()
         except Exception as e:
             print(f"ERROR : {e}")
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return {"message":"error pada sambungan database"}
         message = {"message":f"sukses mengapprove {request.email} dari instansi {query[0]}","passkey":request.unique_character}
     try:
-        db.execute(exists().delete(CalonAdminInstansi).where(email=request.email))
+        db.execute(delete(CalonAdminInstansi).where(CalonAdminInstansi.email==request.email))
         db.commit()
     except Exception as e:
             print(f"ERROR : {e}")
@@ -146,3 +146,37 @@ def approve_pendaftaran_instansi(request: JSONApproveAdmin,user: Annotated[dict,
             return {"message":"error pada sambungan database"}
 
     return message
+
+@router.post('/kegiatan/{id}',status_code=200)
+def change_kegiatan_status(id: int, request: JSONChangeStatus, user: Annotated[dict, Depends(validate_token)], response: Response, db: Session = Depends(get_db)):
+    if user["role"] != "AdminPengawas":
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {"message":"anda tidak dapat mengunakan layanan ini"}
+
+    allowed = {"approved":"Approved","aproved":"Approved","pending":"Pending","denied":"Denied","rejected":"Denied"}
+    key = request.status.strip().lower()
+    if key not in allowed:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message":"status tidak valid, gunakan Approved/Pending/Denied"}
+    normalized = allowed[key]
+
+    try:
+        exists = db.execute(select(Kegiatan.idKegiatan).where(Kegiatan.idKegiatan==id)).first()
+        query = db.execute(select(AdminPengawas.idAdminPengawas).where(AdminPengawas.username==user["username"])).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    if not exists:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"message":"kegiatan tidak ditemukan"}
+
+    try:
+        db.execute(text("UPDATE Kegiatan SET status_kegiatan = :s, idAdminInstansi = :idA WHERE idKegiatan = :id"), {"s":normalized,"idA":query[0], "id": id})
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+
+    return {"message":f"status kegiatan diubah menjadi {normalized}"}

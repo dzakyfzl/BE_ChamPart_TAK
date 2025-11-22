@@ -74,7 +74,7 @@ def edit_akun_admin_pengawas(admin:JSONAdminPengawas, response:Response, user: A
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
-    if existing_account[0][0] != 0:
+    if existing_account[0][0] != 1:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message":"username sudah ada, silahkan coba yang lain"}
 
