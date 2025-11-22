@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Response, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
-from sqlalchemy import insert, select, text, func, delete
+from sqlalchemy import insert, select, text, func, delete, update
+
+from app.classmodel.Account import JSONUpdatePassword
 
 from ..database.database import get_db
 
@@ -15,8 +17,12 @@ from email_validator import validate_email, EmailNotValidError
 import os
 import hashlib
 
-# register instansi
-@router.post('/register/instansi',status_code=200)
+router = APIRouter(
+    prefix="/instansi",
+    tags=["Instansi"]
+)
+
+@router.post('/register',status_code=200)
 def register_instansi(instansi :JSONCalonInstansi, response:Response, db:Session = Depends(get_db)):
     try:
         v = validate_email(instansi.email_pengaju)
@@ -25,7 +31,7 @@ def register_instansi(instansi :JSONCalonInstansi, response:Response, db:Session
         return {"message":"syntax email salah, harap masukkan yang benar"}
 
     try:
-        db.execute(insert(CalonInstansi).values(nama=instansi.nama,jenis=instansi.jenis,alamat=instansi.alamat,email_pengaju=instansi.email_pengaju))
+        db.execute(insert(CalonInstansi).values(nama=instansi.nama,jenis=instansi.jenis,alamat=instansi.alamat,email_pengaju=instansi.email_pengaju,jenis_calon="baru"))
         db.commit()
     except Exception as e:
         print(f"ERROR : {e}")
@@ -34,98 +40,41 @@ def register_instansi(instansi :JSONCalonInstansi, response:Response, db:Session
 
     return {"message":"instansi berhasil diajukan dan dalam proses verifikasi, cek email secara berkala"}
 
-# edit instansi yang hanya bisa dilakukan oleh admin instansi yang bersangkutan
-@router.put('/edit/instansi',status_code=200)
-def edit_instansi(instansi: JSONEditInstansi, user: Annotated[dict, Depends(validate_token)], response:Response, db:Session = Depends(get_db)):
+@router.post("/edit",status_code=200)
+def ajukan_edit_instansi(instansi:JSONCalonInstansi,response:Response,user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
     if user["role"] != "AdminInstansi":
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"message":"anda tidak dapat mengunakan layanan ini"}
 
     try:
-        db.execute(
-            text(
-                "UPDATE instansi SET nama = :nama, jenis = :jenis, alamat = :alamat WHERE idInstansi = :idInstansi"
-            ),
-            {
-                "nama": instansi.nama,
-                "jenis": instansi.jenis,
-                "alamat": instansi.alamat,
-                "idInstansi": user["idInstansi"],
-            },
-        )
+        v = validate_email(instansi.email_pengaju)
+    except EmailNotValidError:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message":"syntax email salah, harap masukkan yang benar"}
+
+    try:
+        db.execute(insert(CalonInstansi).values(nama=instansi.nama,jenis=instansi.jenis,alamat=instansi.alamat,email_pengaju=instansi.email_pengaju,jenis_calon="edit"))
         db.commit()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
 
-    return {"message":"data instansi berhasil diupdate"}
+    return {"message":"instansi berhasil diajukan,tunggu hingga diapprove"}
 
-# edit instansi oleh admin instansi tapi masuk tabel ke calon instansi dan dia ngambil id dari admin instansi yang melakukan request
-@router.put('/edit/instansi/admin',status_code=200)
-def edit_instansi_by_admin(instansi: JSONEditInstansiByAdmin, user: Annotated[dict, Depends(validate_token)], response:Response, db:Session = Depends(get_db)):
-    if user["role"] != "AdminInstansi":
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return {"message":"anda tidak dapat mengunakan layanan ini"}
-
-    try:
-        db.execute(
-            insert(CalonInstansi).values(
-                idCalonInstansi = instansi.idCalonInstansi,
-                nama = instansi.nama,
-                jenis = instansi.jenis,
-                alamat = instansi.alamat,
-                email_pengaju = user["email"],
-                status = "edit"
-            )
-        )
-        db.commit()
-    except Exception as e:
-        print(f"ERROR : {e}")
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message":"error pada sambungan database"}
-
-    return {"message":"data instansi berhasil diajukan untuk diupdate, menunggu verifikasi dari admin pengawas"}
-
-# show all instansi
-@router.get('instansi/showAll',status_code=200)
-def show_all_instansi(db: Session = Depends(get_db)):
-    try:
-        rows = db.execute(select(Instansi)).all()
-    except Exception as e:
-        print(f"ERROR : {e}")
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message":"error pada sambungan database"}
-    
+@router.get("/get-all",status_code=200)
+def data_semua_instansi(response:Response,user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
+    query = None
     data = []
-    for instansi in rows:
-        data.append({
-            "idInstansi": instansi[0].idInstansi,
-            "nama": instansi[0].nama,
-            "jenis": instansi[0].jenis,
-            "alamat": instansi[0].alamat,
-        })
-    return {"instansi": data}
-
-# show instansi by idInstansi
-@router.get('/instansi/{idInstansi}',status_code=200)
-def show_instansi_by_id(idInstansi: int, response:Response, db: Session = Depends(get_db)):
     try:
-        row = db.execute(select(Instansi).where(Instansi.idInstansi==idInstansi)).first()
+        query = db.execute(select(Instansi.nama,Instansi.alamat,Instansi.jenis)).all()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
-    
-    if not row:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"message":"instansi tidak ditemukan"}
+    if not query:
+        return{"message":"Instansi kosong"}
+    for q in query:
+        data.append({"nama":q[0],"alamat":q[1],"jenis":q[2]})
 
-    instansi = row[0]
-    data = {
-        "idInstansi": instansi.idInstansi,
-        "nama": instansi.nama,
-        "jenis": instansi.jenis,
-        "alamat": instansi.alamat,
-    }
-    return {"instansi": data}
+    return {"message":"data instansi berhasil diperoleh", "data":data}

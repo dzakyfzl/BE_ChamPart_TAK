@@ -15,7 +15,7 @@ class Kegiatan(Base):
     TAK_wajib = Column(Boolean, nullable=False)
     status_kegiatan = Column(String(50), nullable=False)
     waktuDiupload = Column(DateTime, nullable=False)
-    idAdminPengawas = Column(Integer, ForeignKey('AdminPengawas.idAdminPengawas'), nullable=False)
+    idAdminPengawas = Column(Integer, ForeignKey('AdminPengawas.idAdminPengawas'), nullable=True)
     idAdminInstansi = Column(Integer, ForeignKey('AdminInstansi.idAdminInstansi'), nullable=False)
     idInstansi = Column(Integer, ForeignKey('Instansi.idInstansi'), nullable=False)
     idLampiran = Column(Integer, ForeignKey('Lampiran.idLampiran'), nullable=False)

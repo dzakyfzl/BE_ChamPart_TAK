@@ -16,7 +16,7 @@ async def validate_token(credentials: Annotated[str, Depends(security)],db: Sess
     token = credentials.credentials  # Ambil token dari credentials
     payload = decode_token(token)
     query_isExist = None
-    user = {"nama": "", "role": "", "email": ""}
+    user = {"username": "", "role": ""}
 
     if payload is None:
         raise HTTPException(
@@ -26,11 +26,11 @@ async def validate_token(credentials: Annotated[str, Depends(security)],db: Sess
         )
     try:
         if payload["role"] == "Pengguna":
-            query_isExist = db.execute(select(func.count('*')).select_from(Pengguna).where(Pengguna.nama==payload['sub'])).all()
+            query_isExist = db.execute(select(func.count('*')).select_from(Pengguna).where(Pengguna.username==payload['sub'])).all()
         elif payload["role"] == "AdminPengawas":
-            query_isExist = db.execute(select(func.count('*')).select_from(AdminPengawas).where(AdminPengawas.nama==payload['sub'])).all()
+            query_isExist = db.execute(select(func.count('*')).select_from(AdminPengawas).where(AdminPengawas.username==payload['sub'])).all()
         elif payload["role"] == "AdminInstansi":
-            query_isExist = db.execute(select(func.count('*')).select_from(AdminInstansi).where(AdminInstansi.nama==payload['sub'])).all()
+            query_isExist = db.execute(select(func.count('*')).select_from(AdminInstansi).where(AdminInstansi.username==payload['sub'])).all()
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -46,10 +46,8 @@ async def validate_token(credentials: Annotated[str, Depends(security)],db: Sess
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Pengguna Tidak ada",
             )
-    user["nama"] = payload['sub']
+    user["username"] = payload['sub']
     user["role"] = payload["role"]
     
     
     return user
-        
-
