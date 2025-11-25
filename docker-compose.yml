@@ -36,18 +36,34 @@ services:
       MYSQL_HOST: ${MYSQL_HOST}
       MYSQL_PORT: ${MYSQL_PORT}
       TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY}
+      EMAIL: ${EMAIL}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      CRON_SECRET_KEY: ${CRON_SECRET_KEY}
+
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - .:/app
-      - .:/media
+      - file:/media
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - champart_network
 
+  cron:
+    build: ./cron
+    container_name: champart_cron
+    restart: always
+    environment:
+      - CRON_SECRET_KEY=${CRON_SECRET_KEY}
+    depends_on:
+      - app
+    networks:
+      - champart_network
 volumes:
   mysql_data:
+  file:
+
 
 networks:
   champart_network:

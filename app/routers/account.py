@@ -86,7 +86,6 @@ def info_akun(response:Response, user: Annotated[dict, Depends(validate_token)],
     if not query and not query2:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message":"user tidak ditemukan"}
-    print(query2)
     
     if user["role"] == "Pengguna":
         return {"username":user["username"],"email":query[0],"no_telp":query[1],"fakultas":query[2],"prodi":query[3]}

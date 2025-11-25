@@ -1,0 +1,2 @@
+0 8 * * * curl -X GET "http://app:8000/notification/trigger" -H "X-Cron-Key: {{KEY}}" >> /var/log/cron.log 2>&1
+
