@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status, Depends
+from fastapi import APIRouter, BackgroundTasks, Response, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, exists, insert, select, delete, text, update
@@ -104,7 +104,7 @@ def approve_pendaftaran_instansi(request: JSONApproveInstansi,user: Annotated[di
     return message
 
 @router.post('/admin-instansi',status_code=200)
-def approve_pendaftaran_admin_instansi(request: JSONApproveAdmin,user: Annotated[dict, Depends(validate_token)], response : Response, db:Session = Depends(get_db)):
+def approve_pendaftaran_admin_instansi(request: JSONApproveAdmin,bg_tasks:BackgroundTasks,user: Annotated[dict, Depends(validate_token)], response : Response, db:Session = Depends(get_db)):
 
     if user["role"] != "AdminPengawas":
         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -132,7 +132,7 @@ def approve_pendaftaran_admin_instansi(request: JSONApproveAdmin,user: Annotated
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return {"message":"error pada sambungan database"}
         isi = f"Selamat, akun anda dengan email {request.email} telah diterima sebagai admin instansi pada {query[0]} \n\nPasskey : {request.unique_character} \n\nPERINGATAN : Jangan sebarkan Passkey ke siapapun \n\nAdmin instansi dapat melakukan :\n1. Menambah dan mengelola Kegiatan\n2. Mengedit properti instansi\n3. Melakukan pengelolaan akun pribadi\n\nSatu Instansi maksimal memiliki 5 akun Admin Instansi"
-        send_email("CHAMPART -  Akun anda berhasil di approve",isi,request.email)
+        bg_tasks.add_task(send_email,"CHAMPART -  Akun anda berhasil di approve",isi,request.email)
         message = {"message":f"sukses mengapprove {request.email} dari instansi {query[0]}"}
     try:
         db.execute(delete(CalonAdminInstansi).where(CalonAdminInstansi.email==request.email))

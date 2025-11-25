@@ -7,7 +7,7 @@ from .database.models import *
 from .data.minatbakat import minat, bakat
 from .depedency import validate_token
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from .routers import (
     account, 
@@ -21,6 +21,7 @@ from .routers import (
     akunAdminInstansi,
     instansi,
     calon,
+    notification,
 )
 
 Base.metadata.create_all(bind=engine)
@@ -60,6 +61,7 @@ app.include_router(calon.router)
 app.include_router(approve.router)
 app.include_router(kegiatan.router) 
 app.include_router(file.router)
+app.include_router(notification.router)
 
 
 @app.get("/", status_code=200,tags=["Verify Token"])

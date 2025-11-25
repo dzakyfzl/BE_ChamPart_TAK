@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import HTTPBearer
 from typing import Annotated
 from sqlalchemy.orm import Session
@@ -38,7 +38,11 @@ def send_email(subject, body, recipients):
         )
         
     
+CRON_SECRET_KEY = os.getenv("CRON_SECRET_KEY")
 
+async def verify_cron_key(x_cron_key: str = Header(..., alias="X-Cron-Key")):
+    if x_cron_key != CRON_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="maaf layanan ini tidak dapat diakses")
 
 async def validate_token(credentials: Annotated[str, Depends(security)],db: Session = Depends(get_db)) -> dict:
     token = credentials.credentials  # Ambil token dari credentials

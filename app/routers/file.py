@@ -95,7 +95,7 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
             return {"message":"error pada sambungan database"}
         
     
-    file.filename = user["username"] + "_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
+    file.filename = user["username"] + "_" + datetime.datetime.now().strftime("[%H.%M.%S]%d.%m.%Y") + "." + file.content_type[6:]
     filepath = os.path.join("/media", file.filename)
     try:
         with open(filepath, "wb+") as file_object:
@@ -191,7 +191,7 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return {"message":"error pada sambungan database"}
     
-    file.filename = str(query[0]) + "_INSTANSI_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
+    file.filename = str(query[0]) + "_INSTANSI_" + datetime.datetime.now().strftime("[%H.%M.%S]%d.%m.%Y") + "." + file.content_type[6:]
     filepath = os.path.join("/media", file.filename)
     try:
         with open(filepath, "wb+") as file_object:
@@ -241,7 +241,7 @@ async def create_upload_file(user: Annotated[dict,Depends(validate_token)],respo
         return {"message":"anda bukan admin instansi"}
     
     
-    file.filename = "KEGIATAN_" + datetime.datetime.now().strftime("%Y-%m-%d[%H:%M:%S]")
+    file.filename = "KEGIATAN_" + datetime.datetime.now().strftime("[%H.%M.%S]%d.%m.%Y") + "." + file.content_type[6:]
     filepath = os.path.join("/media", file.filename)
     try:
         with open(filepath, "wb+") as file_object:
