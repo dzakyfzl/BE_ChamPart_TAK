@@ -5,6 +5,7 @@ from sqlalchemy import and_, exists, insert, select, delete, text, update
 
 from app.classmodel.Kegiatan import JSONChangeStatus
 from app.database.models.calonAdminInstansi import CalonAdminInstansi
+from app.depedency import send_email
 
 from ..database.database import get_db
 
@@ -36,51 +37,23 @@ def approve_pendaftaran_instansi(request: JSONApproveInstansi,user: Annotated[di
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"message": "calon instansi tidak ditemukan"}
 
-    calon_instansi = calon[0]
+    calon_instansi = query
 
     if request.isApproved:
-        if calon_instansi.status == "baru":
-            # Buat instansi baru
-            try:
-                db.execute(
-                    insert(Instansi).values(
-                        nama=calon_instansi.nama,
-                        jenis=calon_instansi.jenis,
-                        alamat=calon_instansi.alamat,
-                        idLampiran=None  # atau sesuai kebutuhan
-                    )
+        try:
+            db.execute(
+                insert(Instansi).values(
+                    nama=calon_instansi[0],
+                    jenis=calon_instansi[1],
+                    alamat=calon_instansi[2]
                 )
-                db.commit()
-            except Exception as e:
-                print(f"ERROR : {e}")
-                response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-                return {"message": "gagal membuat instansi baru"}
-            return {"message": "instansi baru berhasil diapprove dan dibuat"}
-        elif calon_instansi.status == "edit":
-            # Cari instansi berdasarkan email_pengaju
-            admin_instansi = db.execute(
-                select(AdminInstansi).where(AdminInstansi.email == calon_instansi.email_pengaju)
-            ).first()
-            if not admin_instansi:
-                response.status_code = status.HTTP_404_NOT_FOUND
-                return {"message": "admin instansi tidak ditemukan"}
-            id_instansi = admin_instansi[0].idInstansi
-            try:
-                db.execute(
-                    Instansi.__table__.update()
-                    .where(Instansi.idInstansi == id_instansi)
-                    .values(
-                        nama=calon_instansi.nama,
-                        jenis=calon_instansi.jenis,
-                        alamat=calon_instansi.alamat
-                    )
-                )
-                db.commit()
-            except Exception as e:
-                print(f"ERROR : {e}")
-                response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-                return {"message": "gagal update instansi"}
-            return {"message": "instansi berhasil diupdate"}
+            )
+            db.commit()
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "gagal membuat instansi baru"}
+        return {"message": "instansi baru berhasil diapprove dan dibuat"}
     else:
         return {"message": "pengajuan tidak diapprove"}
 
@@ -131,7 +104,7 @@ def approve_pendaftaran_instansi(request: JSONApproveInstansi,user: Annotated[di
     return message
 
 @router.post('/admin-instansi',status_code=200)
-def approve_pendaftaran_instansi(request: JSONApproveAdmin,user: Annotated[dict, Depends(validate_token)], response : Response, db:Session = Depends(get_db)):
+def approve_pendaftaran_admin_instansi(request: JSONApproveAdmin,user: Annotated[dict, Depends(validate_token)], response : Response, db:Session = Depends(get_db)):
 
     if user["role"] != "AdminPengawas":
         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -148,7 +121,7 @@ def approve_pendaftaran_instansi(request: JSONApproveAdmin,user: Annotated[dict,
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"message":"instansi tidak ada/belum terdaftar"}
     
-    message = {"message":f"sukses reject {request.email} dari instansi {query[0]}","passkey":"None"}
+    message = {"message":f"sukses reject {request.email} dari instansi {query[0]}"}
     if request.isApproved:
         hashed_passkey = generate_pass(request.unique_character,request.email,query[0])
 
@@ -158,7 +131,9 @@ def approve_pendaftaran_instansi(request: JSONApproveAdmin,user: Annotated[dict,
             print(f"ERROR : {e}")
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return {"message":"error pada sambungan database"}
-        message = {"message":f"sukses mengapprove {request.email} dari instansi {query[0]}","passkey":request.unique_character}
+        isi = f"Selamat, akun anda dengan email {request.email} telah diterima sebagai admin instansi pada {query[0]} \n\nPasskey : {request.unique_character} \n\nPERINGATAN : Jangan sebarkan Passkey ke siapapun \n\nAdmin instansi dapat melakukan :\n1. Menambah dan mengelola Kegiatan\n2. Mengedit properti instansi\n3. Melakukan pengelolaan akun pribadi\n\nSatu Instansi maksimal memiliki 5 akun Admin Instansi"
+        send_email("CHAMPART -  Akun anda berhasil di approve",isi,request.email)
+        message = {"message":f"sukses mengapprove {request.email} dari instansi {query[0]}"}
     try:
         db.execute(delete(CalonAdminInstansi).where(CalonAdminInstansi.email==request.email))
         db.commit()
