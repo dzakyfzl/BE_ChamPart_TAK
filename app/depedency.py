@@ -8,8 +8,36 @@ from .database.models.pengguna import Pengguna
 from .database.models.adminPengawas import AdminPengawas
 from .database.models.adminInstansi import AdminInstansi
 from .auth.jwt_auth import decode_token
+import smtplib
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+import os
 
 security = HTTPBearer()
+
+load_dotenv()
+
+EMAIL = os.getenv("EMAIL")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
+
+def send_email(subject, body, recipients):
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = EMAIL
+    msg['To'] = ', '.join(recipients)
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+           smtp_server.login(EMAIL, EMAIL_PASSWORD)
+           smtp_server.sendmail(EMAIL, recipients, msg.as_string())
+    except Exception as e:
+        print("ERROR: ",e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Gagal mengirimkan email",
+        )
+        
+    
 
 
 async def validate_token(credentials: Annotated[str, Depends(security)],db: Session = Depends(get_db)) -> dict:
