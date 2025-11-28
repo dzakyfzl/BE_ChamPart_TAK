@@ -12,19 +12,21 @@ from ..database.database import get_db
 
 from ..database.models import * 
 from ..classmodel import *
+from ..database.models.simpan import Simpan
 
 from ..depedency import validate_token, verify_cron_key
+from zoneinfo import ZoneInfo
 
 router = APIRouter(prefix="/notification", tags=["Notifikasi"])
 
 @router.get("/trigger",status_code=200,dependencies=[Depends(verify_cron_key)])
 async def pemicu_notifikasi_harian(response:Response,bc_tasks:BackgroundTasks,db: Session = Depends(get_db)):
-    besok = datetime.now().date(timezone(timedelta(hours=7))) + timedelta(days=1)
+    besok = datetime.now(tz=ZoneInfo("Asia/Jakarta")).date() + timedelta(days=1)
     query = []
     try:
         stmt = (select(Kegiatan.nama,Pengguna.username,Pengguna.email)
-                 .join(simpan,Kegiatan.idKegiatan==simpan.c.idKegiatan)
-                 .join(Pengguna,Pengguna.idPengguna==simpan.c.idPengguna)
+                 .join(Simpan,Kegiatan.idKegiatan==Simpan.idKegiatan)
+                 .join(Pengguna,Pengguna.idPengguna==Simpan.idPengguna)
                  .where(cast(Kegiatan.waktu,Date) == besok))
         db.execute(stmt).all()
     except Exception as e:
@@ -40,7 +42,7 @@ async def pemicu_notifikasi_harian(response:Response,bc_tasks:BackgroundTasks,db
     return {"message":"trigger notifikasi telah terlaksana"}
 
 @router.get("/test-email",status_code=200,dependencies=[Depends(verify_cron_key)])
-async def pemicu_notifikasi_harian(response:Response,bc_tasks:BackgroundTasks,db: Session = Depends(get_db)):
+async def kirim_ke_semua_email(response:Response,bc_tasks:BackgroundTasks,db: Session = Depends(get_db)):
     query = []
     try:
         query = db.execute(select(AdminInstansi.email,AdminInstansi.username)).all()

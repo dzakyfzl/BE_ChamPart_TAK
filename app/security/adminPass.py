@@ -14,7 +14,6 @@ def generate_pass(unique:str,email:str, nama_instansi:str) -> str:
 def verif_pass(unique:str, email:str, nama_instansi:str, existed_passkey:str) -> bool:
     passkey = unique + email + nama_instansi + SECRET_KEY
     passkey = hashlib.sha256(passkey.encode('utf-8')).hexdigest()
-    print(passkey,existed_passkey)
     if existed_passkey == passkey:
         return True
     else:
