@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 env/
 venv/
+**/ssl
+media/
 
 # Environment variables
 .env

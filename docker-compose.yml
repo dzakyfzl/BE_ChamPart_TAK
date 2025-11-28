@@ -44,8 +44,8 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - .:/app
-      - file:/media
+      - ./app:/app/app
+      - ./media:/media
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - champart_network
@@ -62,7 +62,6 @@ services:
       - champart_network
 volumes:
   mysql_data:
-  file:
 
 
 networks:

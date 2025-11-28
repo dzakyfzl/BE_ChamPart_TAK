@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, text, func, delete, update
 
 from app.classmodel.Account import JSONUpdatePassword
+from app.classmodel.AdminPengawas import *
 
 from ..database.database import get_db
 
@@ -62,6 +63,9 @@ def register_adminP(admin :JSONAdminPengawas, response:Response, db:Session = De
 
 @router.post("/edit", status_code=200)
 def edit_akun_admin_pengawas(admin:JSONAdminPengawas, response:Response, user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
+    if user["role"] != "AdminPengawas":
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {"message":"anda tidak dapat mengunakan layanan ini"}
     try:
         v = validate_email(admin.email)
     except EmailNotValidError:

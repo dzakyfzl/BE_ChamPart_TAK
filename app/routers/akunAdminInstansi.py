@@ -195,7 +195,7 @@ def inikah_my_instansi(response:Response,user: Annotated[dict, Depends(validate_
         return {"message":"anda bukan admin dari instansi manapun"}
     
     try:
-        query = db.execute(select(Instansi.nama,Instansi.alamat,Instansi.jenis).where(Instansi.idInstansi==query2[0])).first()
+        query = db.execute(select(Instansi.nama,Instansi.alamat,Instansi.jenis,Instansi.idLampiran).where(Instansi.idInstansi==query2[0])).first()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -204,5 +204,5 @@ def inikah_my_instansi(response:Response,user: Annotated[dict, Depends(validate_
         return{"message":"Instansi kosong"}
 
 
-    return {"message":"data instansi berhasil diperoleh", "data":{"nama":query[0],"alamat":query[1],"jenis":query[2]}}
+    return {"message":"data instansi berhasil diperoleh", "data":{"nama":query[0],"alamat":query[1],"jenis":query[2],"idLampiran":query[3]}}
 
