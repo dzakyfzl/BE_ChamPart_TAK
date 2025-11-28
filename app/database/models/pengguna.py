@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from app.database.database import Base
 from .minatPengguna import minatPengguna
 from .bakatPengguna import bakatPengguna
-from .simpan import simpan
 
 class Pengguna(Base):
     __tablename__ = "Pengguna"
@@ -21,7 +20,8 @@ class Pengguna(Base):
     lampiran = relationship("Lampiran", backref="pengguna")
     minat_list = relationship("Minat", secondary=minatPengguna, backref="pengguna_list")
     bakat_list = relationship("Bakat", secondary=bakatPengguna, backref="pengguna_list")
-    kegiatan_simpan = relationship("Kegiatan", secondary=simpan, backref="pengguna_simpan")
+    simpan_kegiatan = relationship("Simpan", back_populates="pengguna")
+    
 
 
     def __repr__(self):

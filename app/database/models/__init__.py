@@ -12,7 +12,7 @@ from .minatKegiatan import minatKegiatan
 from .minatPengguna import minatPengguna
 from .bakatKegiatan import bakatKegiatan
 from .bakatPengguna import bakatPengguna
-from .simpan import simpan
+from .simpan import Simpan
 from .calonAdminInstansi import CalonAdminInstansi
 
 __all__ = [
@@ -30,6 +30,6 @@ __all__ = [
     "minatPengguna",
     "bakatKegiatan",
     "bakatPengguna",
-    "simpan",
+    "Simpan",
     "CalonAdminInstansi"
 ]

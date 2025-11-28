@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
+from .Minat import JSONMinat
+from .Bakat import JSONBakat
+from .Lampiran import JSONLampiran
 
 class KegiatanBase(BaseModel):
     nama: str
@@ -10,6 +13,22 @@ class KegiatanBase(BaseModel):
     TAK_wajib: bool
     idInstansi: int
     idLampiran: int
+
+class JSONKegiatanCard(BaseModel):
+    idKegiatan: int
+    nama: str
+    nama_instansi: str
+    TAK_wajib: bool
+    waktu: datetime
+    waktuDiupload: datetime
+    views: int
+    minat: List[JSONMinat] = []
+    bakat: List[JSONBakat] = []
+
+
+    class Config:
+        orm_mode = True
+
 
 class JSONKegiatanCreate(KegiatanBase):
     minat_id: List[int] = []
@@ -45,3 +64,22 @@ class JSONKegiatanDetail(JSONKegiatanResponse):
 
 class JSONChangeStatus(BaseModel):
     status: str
+
+
+class JSONKegiatanDetail(BaseModel):
+    idKegiatan: int
+    nama: str
+    deskripsi: str
+    waktu: datetime
+    nominal_TAK: int
+    TAK_wajib: bool
+    status_kegiatan: str
+    waktuDiupload: datetime
+    views: int
+    nama_instansi: str
+    lampiran: Optional[JSONLampiran] = None
+    minat: List[JSONMinat] = []
+    bakat: List[JSONBakat] = []
+
+    class Config:
+        from_attributes = True
