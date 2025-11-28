@@ -145,3 +145,68 @@ def get_minat_pengguna(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error mengambil data minat"
         )
+    
+@router.delete("/pengguna", status_code=200)
+def hapus_minat_pengguna(
+    request: JSONMinatRequest,
+    user : Annotated[dict, Depends(validate_token)],
+    db: Session = Depends(get_db)
+):
+    
+    if user["role"] != "Pengguna": 
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hanya pengguna yang dapat menggunakan endpoint ini"
+        )
+    
+    if not request.minat_id:
+       raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minat tidak boleh kosong"
+        )
+    
+    for minat_id in request.minat_id:
+        if type(minat_id) is not int:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Format input salah, ID harus berupa integer"
+            )
+        
+    try : 
+        query_id = db.execute(
+            select(Pengguna.idPengguna)
+            .where(Pengguna.nama == user["nama"])
+        ).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error pada sambungan database"
+        )
+    
+    if not query_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pengguna tidak ditemukan"
+        )
+    
+    id_pengguna = query_id[0]
+
+    try:
+        db.execute(
+            delete(minatPengguna)
+            .where(
+                (minatPengguna.c.idPengguna == id_pengguna) &
+                (minatPengguna.c.idMinat.in_(request.minat_id))
+            )
+        )
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error menghapus minat"
+        )
+    
+    return {"message": "Minat berhasil dihapus"}
