@@ -22,6 +22,7 @@ from .routers import (
     instansi,
     calon,
     notification,
+    simpan,
 )
 
 Base.metadata.create_all(bind=engine)
@@ -62,6 +63,7 @@ app.include_router(approve.router)
 app.include_router(kegiatan.router) 
 app.include_router(file.router)
 app.include_router(notification.router)
+app.include_router(simpan.router)
 
 
 @app.get("/", status_code=200,tags=["Verify Token"])

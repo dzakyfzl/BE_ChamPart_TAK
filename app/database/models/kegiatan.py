@@ -15,6 +15,7 @@ class Kegiatan(Base):
     TAK_wajib = Column(Boolean, nullable=False)
     status_kegiatan = Column(String(50), nullable=False)
     waktuDiupload = Column(DateTime, nullable=False)
+    views = Column(Integer, nullable=False, default=0)
     idAdminPengawas = Column(Integer, ForeignKey('AdminPengawas.idAdminPengawas'), nullable=True)
     idAdminInstansi = Column(Integer, ForeignKey('AdminInstansi.idAdminInstansi'), nullable=False)
     idInstansi = Column(Integer, ForeignKey('Instansi.idInstansi'), nullable=False)
@@ -26,6 +27,7 @@ class Kegiatan(Base):
     lampiran = relationship("Lampiran", backref="kegiatan")
     minat_list = relationship("Minat", secondary=minatKegiatan, backref="kegiatan_list")
     bakat_list = relationship("Bakat", secondary=bakatKegiatan, backref="kegiatan_list")
+    disimpan_oleh = relationship("Simpan", back_populates="kegiatan")
 
     def __repr__(self):
         return f"<Kegiatan(idKegiatan={self.idKegiatan}, nama='{self.nama}')>"

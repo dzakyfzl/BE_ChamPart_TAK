@@ -9,8 +9,11 @@ from .Kegiatan import (
     JSONKegiatanCreate,
     JSONKegiatanUpdate,
     JSONKegiatanResponse,
-    JSONKegiatanDetail
+    JSONKegiatanDetail,
+    JSONKegiatanCard,
 )
+from .simpan import JSONSimpanList, JSONSimpanRequest, JSONSimpanResponse
+
 
 __all__ = [
     "JSONAccount",
@@ -26,5 +29,9 @@ __all__ = [
     "JSONKegiatanResponse",
     "JSONKegiatanDetail",
     "JSONMinatRequest",
-    "JSONBakatRequest"
+    "JSONBakatRequest",
+    "JSONSimpanList",
+    "JSONSimpanRequest",
+    "JSONSimpanResponse",
+    "JSONKegiatanCard",
 ]

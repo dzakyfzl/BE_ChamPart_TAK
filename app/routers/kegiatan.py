@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Response, status, Depends
+from fastapi import APIRouter, Response, status, Depends,Query
 from typing import Annotated, List
 from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, text, func, delete, update
-from sqlalchemy import DateTime
+from datetime import datetime
 
 from app.classmodel.Kegiatan import *
 
@@ -17,25 +17,38 @@ from ..depedency import validate_token
 
 router = APIRouter(prefix="/kegiatan", tags=["Kegiatan"])
 
-@router.get("/", response_model=List[JSONKegiatanResponse])
+@router.get("/all", response_model=List[JSONKegiatanCard], summary="Get All Kegiatan")
 def get_all_kegiatan(
     response: Response,
-    user: Annotated[dict, Depends(validate_token)],  
+    user: Annotated[dict, Depends(validate_token)],
     db: Session = Depends(get_db)
 ):
-    Kegiatan_list = []
-    data = []
     try:
-        Kegiatan_list = db.execute(select(Kegiatan.idKegiatan,Kegiatan.nama,Kegiatan.deskripsi,Instansi.nama,Kegiatan.bakat_list,Kegiatan.minat_list,Kegiatan.idLampiran,Kegiatan.waktu,Kegiatan.nominal_TAK,Kegiatan.TAK_wajib).join(Kegiatan).where(Kegiatan.status_kegiatan=="approved")).all()
+        kegiatan_list = db.execute(
+            select(Kegiatan)
+            .order_by(Kegiatan.waktuDiupload.desc())
+        ).scalars().all()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message":"error pada sambungan database"}
+        return {"message": "error pada sambungan database"}
 
-    if not Kegiatan_list:
+    if not kegiatan_list:
         return []
-    for k in Kegiatan_list:
-        data.append({"idKegiatan":k[0],"nama":k[1],"deskripsi":k[2],"nama_instansi":k[3],"bakat":[4],"minat":[5],"idLampiran":[6],"waktu":[7],"nominal_TAK":k[8],"TAK_wajib":k[9]})
+
+    data = []
+    for k in kegiatan_list:
+        data.append({
+            "idKegiatan": k.idKegiatan,
+            "nama": k.nama,
+            "nama_instansi": k.instansi.nama,
+            "TAK_wajib": k.TAK_wajib,
+            "waktu": k.waktu,
+            "waktuDiupload": k.waktuDiupload,
+            "views": k.views,
+            "minat": [{"idMinat": m.idMinat, "nama_minat": m.nama} for m in k.minat_list],
+            "bakat": [{"idBakat": b.idBakat, "nama_bakat": b.nama} for b in k.bakat_list]
+        })
     
     return data
 
@@ -212,3 +225,236 @@ def delete_kegiatan(id: int, user: Annotated[dict, Depends(validate_token)], res
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
     return {"message":"kegiatan berhasil dihapus"}
+
+@router.get("/filter", response_model=List[JSONKegiatanCard], summary="Filter & Search Kegiatan")
+def filter_search_kegiatan(
+    response: Response,
+    user: Annotated[dict, Depends(validate_token)],
+    search: str = Query(default="", description="Cari berdasarkan nama kegiatan"),
+    minat_ids: List[int] = Query(default=[], description="List ID minat"),
+    bakat_ids: List[int] = Query(default=[], description="List ID bakat"),
+    db: Session = Depends(get_db)
+):
+    now = datetime.now()
+    
+    if not minat_ids and not bakat_ids:
+        try:
+            query = select(Kegiatan).where(
+                Kegiatan.status_kegiatan == "approved", 
+                Kegiatan.waktu > now
+            )
+            
+            if search:
+                query = query.where(Kegiatan.nama.ilike(f"%{search}%"))
+            
+            kegiatan_list = db.execute(query).scalars().all()
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "error pada sambungan database"}
+    else:
+        try:
+            kegiatan_by_minat = set()
+            if minat_ids:
+                query = (
+                    select(Kegiatan)
+                    .join(minatKegiatan, Kegiatan.idKegiatan == minatKegiatan.c.idKegiatan)
+                    .where(
+                        Kegiatan.status_kegiatan == "approved",
+                        Kegiatan.waktu > now,
+                        minatKegiatan.c.idMinat.in_(minat_ids)
+                    )
+                )
+                if search:
+                    query = query.where(Kegiatan.nama.ilike(f"%{search}%"))
+                
+                result = db.execute(query).scalars().all()
+                kegiatan_by_minat = set(result)
+            
+            kegiatan_by_bakat = set()
+            if bakat_ids:
+                query = (
+                    select(Kegiatan)
+                    .join(bakatKegiatan, Kegiatan.idKegiatan == bakatKegiatan.c.idKegiatan)
+                    .where(
+                        Kegiatan.status_kegiatan == "approved",
+                        Kegiatan.waktu > now,
+                        bakatKegiatan.c.idBakat.in_(bakat_ids)
+                    )
+                )
+                if search:
+                    query = query.where(Kegiatan.nama.ilike(f"%{search}%"))
+                
+                result = db.execute(query).scalars().all()
+                kegiatan_by_bakat = set(result)
+
+            kegiatan_list = list(kegiatan_by_minat | kegiatan_by_bakat)
+            
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "error pada sambungan database"}
+
+    if not kegiatan_list:
+        return []
+
+    data = []
+    for k in kegiatan_list:
+        data.append({
+            "idKegiatan": k.idKegiatan,
+            "nama": k.nama,
+            "nama_instansi": k.instansi.nama,
+            "TAK_wajib": k.TAK_wajib,
+            "waktu": k.waktu,
+            "waktuDiupload": k.waktuDiupload,
+            "views": k.views,
+            "minat": [{"idMinat": m.idMinat, "nama_minat": m.nama} for m in k.minat_list],
+            "bakat": [{"idBakat": b.idBakat, "nama_bakat": b.nama} for b in k.bakat_list]
+        })
+    
+    return data
+
+@router.get("/fyp", response_model=List[JSONKegiatanCard], summary="For You Page")
+def get_fyp_kegiatan(
+    response: Response,
+    user: Annotated[dict, Depends(validate_token)],
+    db: Session = Depends(get_db)
+):
+    now = datetime.now()
+    
+    if user["role"] != "Pengguna":
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return {"message": "Hanya pengguna yang dapat melihat FYP"}
+
+    try:
+        pengguna = db.execute(
+            select(Pengguna).where(Pengguna.username == user["username"])
+        ).scalar_one_or_none()
+        
+        if not pengguna:
+            response.status_code = status.HTTP_404_NOT_FOUND
+            return {"message": "Pengguna tidak ditemukan"}
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": "error pada sambungan database"}
+
+    minat_ids = [m.idMinat for m in pengguna.minat_list]
+    bakat_ids = [b.idBakat for b in pengguna.bakat_list]
+
+    if not minat_ids and not bakat_ids:
+        try:
+            kegiatan_list = db.execute(
+                select(Kegiatan)
+                .where(
+                    Kegiatan.status_kegiatan == "approved",
+                    Kegiatan.waktu > now
+                )
+                .order_by(Kegiatan.waktuDiupload.desc())
+            ).scalars().all()
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "error pada sambungan database"}
+    else:
+        try:
+            kegiatan_by_minat = set()
+            if minat_ids:
+                result = db.execute(
+                    select(Kegiatan)
+                    .join(minatKegiatan, Kegiatan.idKegiatan == minatKegiatan.c.idKegiatan)
+                    .where(
+                        Kegiatan.status_kegiatan == "approved",
+                        Kegiatan.waktu > now,
+                        minatKegiatan.c.idMinat.in_(minat_ids)
+                    )
+                ).scalars().all()
+                kegiatan_by_minat = set(result)
+            
+            kegiatan_by_bakat = set()
+            if bakat_ids:
+                result = db.execute(
+                    select(Kegiatan)
+                    .join(bakatKegiatan, Kegiatan.idKegiatan == bakatKegiatan.c.idKegiatan)
+                    .where(
+                        Kegiatan.status_kegiatan == "approved",
+                        Kegiatan.waktu > now,
+                        bakatKegiatan.c.idBakat.in_(bakat_ids)
+                    )
+                ).scalars().all()
+                kegiatan_by_bakat = set(result)
+
+            kegiatan_list = list(kegiatan_by_minat | kegiatan_by_bakat)
+            kegiatan_list.sort(key=lambda x: x.waktuDiupload, reverse=True)
+            
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message": "error pada sambungan database"}
+
+    if not kegiatan_list:
+        return []
+
+    data = []
+    for k in kegiatan_list:
+        data.append({
+            "idKegiatan": k.idKegiatan,
+            "nama": k.nama,
+            "nama_instansi": k.instansi.nama,
+            "TAK_wajib": k.TAK_wajib,
+            "waktu": k.waktu,
+            "waktuDiupload": k.waktuDiupload,
+            "views": k.views,
+            "minat": [{"idMinat": m.idMinat, "nama_minat": m.nama} for m in k.minat_list],
+            "bakat": [{"idBakat": b.idBakat, "nama_bakat": b.nama} for b in k.bakat_list]
+        })
+    
+    return data
+
+@router.get("/{idKegiatan}", response_model=JSONKegiatanDetail, summary="Get Detail Kegiatan")
+def get_detail_kegiatan(
+    idKegiatan: int,
+    response: Response,
+    user: Annotated[dict, Depends(validate_token)],
+    db: Session = Depends(get_db)
+):
+    
+    try:
+        kegiatan = db.execute(
+            select(Kegiatan).where(Kegiatan.idKegiatan == idKegiatan)
+        ).scalar_one_or_none()
+        
+        if not kegiatan:
+            response.status_code = status.HTTP_404_NOT_FOUND
+            return {"message": "Kegiatan tidak ditemukan"}
+        
+        kegiatan.views += 1
+        db.commit()
+        db.refresh(kegiatan)
+        
+        return {
+            "idKegiatan": kegiatan.idKegiatan,
+            "nama": kegiatan.nama,
+            "deskripsi": kegiatan.deskripsi,
+            "waktu": kegiatan.waktu,
+            "nominal_TAK": kegiatan.nominal_TAK,
+            "TAK_wajib": kegiatan.TAK_wajib,
+            "status_kegiatan": kegiatan.status_kegiatan,
+            "waktuDiupload": kegiatan.waktuDiupload,
+            "views": kegiatan.views,
+            "nama_instansi": kegiatan.instansi.nama,
+            "lampiran": {
+                "idLampiran": kegiatan.lampiran.idLampiran,
+                "nama": kegiatan.lampiran.nama,
+                "jenis": kegiatan.lampiran.jenis,
+                "ukuran": kegiatan.lampiran.ukuran,
+                "folder": kegiatan.lampiran.folder
+            } if kegiatan.lampiran else None,
+            "minat": [{"idMinat": m.idMinat, "nama_minat": m.nama} for m in kegiatan.minat_list],
+            "bakat": [{"idBakat": b.idBakat, "nama_bakat": b.nama} for b in kegiatan.bakat_list]
+        }
+        
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": "error pada sambungan database"}
