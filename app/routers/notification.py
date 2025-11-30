@@ -45,12 +45,12 @@ async def pemicu_notifikasi_harian(response:Response,bc_tasks:BackgroundTasks,db
 async def kirim_ke_semua_email(response:Response,bc_tasks:BackgroundTasks,db: Session = Depends(get_db)):
     query = []
     try:
-        query = db.execute(select(AdminInstansi.email,AdminInstansi.username)).all()
+        query = db.execute(select(Pengguna.email,Pengguna.username)).all()
     except Exception as e:
         print(f"ERROR : {e}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
     for q in query:
-        isi = f"Hai, {q[1]}!"
+        isi = f"Hai, {q[1]}!\n\nIni adalah email percobaan dari sistem notifikasi CHAMPART.\n\nTerima Kasih."
         bc_tasks.add_task(send_email,subject=f"CHAMPART - Test mail for {q[0]}",body=isi,recipients=q[0])
     return {"message":"trigger test notifikasi telah terlaksana"}

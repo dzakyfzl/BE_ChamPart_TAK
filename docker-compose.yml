@@ -60,6 +60,8 @@ services:
       - app
     networks:
       - champart_network
+
+
 volumes:
   mysql_data:
 

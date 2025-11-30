@@ -6,9 +6,15 @@ env/
 venv/
 **/ssl
 media/
+etc/
+ssh/
+mail/
 
 # Environment variables
 .env
+
+docker-compose copy.yml
+command.txt
 
 # Database
 *.db
