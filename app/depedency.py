@@ -1,3 +1,4 @@
+from email.utils import formatdate, make_msgid
 from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import HTTPBearer
 from typing import Annotated
@@ -12,6 +13,7 @@ import smtplib
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
 import os
+import ssl
 
 security = HTTPBearer()
 
@@ -26,8 +28,9 @@ def send_email(subject, body, recipients):
     msg['Subject'] = subject
     msg['From'] = EMAIL
     msg['To'] = ', '.join(recipients)
+
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+        with smtplib.SMTP_SSL('smtp.gmail.com',465) as smtp_server:
            smtp_server.login(EMAIL, EMAIL_PASSWORD)
            smtp_server.sendmail(EMAIL, recipients, msg.as_string())
     except Exception as e:

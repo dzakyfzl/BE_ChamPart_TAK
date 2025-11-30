@@ -1,4 +1,4 @@
-minat = [
+data_minat = [
   {"nama":"Kewirausahaan (Entrepreneurship)"},
   {"nama":"Teknologi & Pemrograman"},
   {"nama":"Desain Grafis & UI/UX"},
@@ -21,7 +21,7 @@ minat = [
   {"nama":"Kuliner & Tata Boga"}
 ]
 
-bakat = [
+data_bakat = [
   {"nama":"Berbicara di Depan Umum (Public Speaking)"},
   {"nama":"Analisis & Logika"},
   {"nama":"Kepemimpinan (Leadership)"},

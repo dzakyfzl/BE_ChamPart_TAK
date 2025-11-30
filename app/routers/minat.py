@@ -235,3 +235,21 @@ def hapus_minat_pengguna(
         )
     
     return {"message": f"Minat berhasil dihapus"}
+
+@router.get("/all")
+def ambil_semua_data_minat(user: Annotated[dict, Depends(validate_token)],db: Session = Depends(get_db)):
+    query = []
+    try:
+        query = db.execute(select(Minat.idMinat,Minat.nama)).all()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error pada sambungan database"
+        )
+    data = []
+    for q in query:
+        data.append({"idMinat":q[0],"nama":q[1]})
+    message = {"message":"sukses menerima data minat","data":data}
+    return message

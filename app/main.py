@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, func
 from .database.database import get_db, SessionLocal, Base, engine
 from .database.models import * 
-from .data.minatbakat import minat, bakat
+from .data.minatbakat import data_minat,data_bakat
 from .depedency import validate_token
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
@@ -41,8 +41,8 @@ async def lifespan(app: FastAPI):
     
     if count_m[0] == 0 and count_b[0] == 0:
         try:
-            db.execute(insert(Minat).values(minat))
-            db.execute(insert(Bakat).values(minat))
+            db.execute(insert(Minat).values(data_minat))
+            db.execute(insert(Bakat).values(data_bakat))
             db.commit()
         except Exception as e:
             print("ERROR : ", e)
