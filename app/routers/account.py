@@ -8,9 +8,10 @@ from app.classmodel.Account import JSONPassword, JSONUpdatePassword
 from ..database.database import get_db
 
 from ..database.models import * 
+from ..database.models.refreshToken import RefreshToken
 from ..classmodel import *
 
-from ..auth.jwt_auth import create_token
+from ..auth.jwt_auth import create_token, create_refresh_token
 from ..depedency import validate_token
 from ..security.adminPass import verif_pass
 from email_validator import validate_email, EmailNotValidError
@@ -56,13 +57,29 @@ def login(akun:JSONLogin, response:Response,db:Session = Depends(get_db)):
     if hashed_input_password != query[2]:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"message":"password salah"}
-
+    
+    try:
+        db.execute(delete(RefreshToken).where(RefreshToken.username==query[0]))
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
     access_token = create_token(query[0],akun.role)
-    if access_token == "Error":
+    refresh_token = create_refresh_token(query[0],akun.role)
+    try:
+        db.execute(insert(RefreshToken).values(username=query[0],isi=refresh_token))
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    
+    if access_token == "Error" or refresh_token == "Error":
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {"message":"tidak bisa generate token, Harap coba lagi"}
     
-    return {"message":"berhasil login","token":access_token}
+    return {"message":"berhasil login","access_token":access_token,"refresh_token":refresh_token}
     
 @router.get("/get", status_code=200)
 def info_akun(response:Response, user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
@@ -194,6 +211,7 @@ def hapus_akun(password: JSONPassword, response:Response, user: Annotated[dict, 
             return {"message":"akun di role ini tidak ditemukan"}
 
         db.execute(stmt)
+        db.execute(delete(RefreshToken).where(RefreshToken.username==user["username"]))
         db.commit()
 
     except Exception as e:
@@ -202,3 +220,14 @@ def hapus_akun(password: JSONPassword, response:Response, user: Annotated[dict, 
         return {"message":"error pada sambungan database"}
     
     return {"message":"berhasil menghapus akun"}
+
+@router.get("/logout")
+def logout_akun(response:Response, user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
+    try:
+        db.execute(delete(RefreshToken).where(RefreshToken.username==user["username"]))
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    return {"message":"akun telah di logout"}

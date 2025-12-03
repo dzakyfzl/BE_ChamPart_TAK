@@ -5,13 +5,14 @@ from sqlalchemy import insert, select, text, func, delete, update
 
 from app.classmodel.Account import JSONUpdatePassword
 from app.classmodel.AdminPengawas import *
+from app.database.models.refreshToken import RefreshToken
 
 from ..database.database import get_db
 
 from ..database.models import * 
 from ..classmodel import *
 
-from ..auth.jwt_auth import create_token
+from ..auth.jwt_auth import create_refresh_token, create_token
 from ..depedency import validate_token
 from ..security.adminPass import verif_pass
 from email_validator import validate_email, EmailNotValidError
@@ -32,6 +33,20 @@ def register_adminP(admin :JSONAdminPengawas, response:Response, db:Session = De
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message":"syntax email salah, harap masukkan yang benar"}
     
+    existed_passkey = None
+    try:
+        existed_passkey = db.execute(select(Passkey.isiPasskey).select_from(Passkey).where(Passkey.email == admin.email)).first()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    if not existed_passkey:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message":"Passkey tidak ditemukan"}
+    if not verif_pass(admin.passkey,admin.email,"AdminPengawas",existed_passkey[0]):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message":"passkey salah!"}
+    
     try:
         existing_account = db.execute(select(func.count('*')).select_from(AdminPengawas).where(AdminPengawas.username == admin.username)).all()
     except Exception as e:
@@ -42,8 +57,24 @@ def register_adminP(admin :JSONAdminPengawas, response:Response, db:Session = De
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message":"akun sudah ada, harap untuk login"}
     
+    try:
+        db.execute(delete(RefreshToken).where(RefreshToken.username==admin.username))
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
     access_token = create_token(admin.username,"AdminPengawas")
-    if access_token == "Error":
+    refresh_token = create_refresh_token(admin.username,"AdminPengawas")
+    try:
+        db.execute(insert(RefreshToken).values(username=admin.username,isi=refresh_token))
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    
+    if access_token == "Error" or refresh_token == "Error":
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {"message":"tidak bisa generate token, Harap coba lagi"}
     
@@ -59,7 +90,7 @@ def register_adminP(admin :JSONAdminPengawas, response:Response, db:Session = De
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
     
-    return {"message":"akun telah dibuat","token":access_token}
+    return {"message":"akun telah dibuat","access_token":access_token,"refresh_token":refresh_token}
 
 @router.post("/edit", status_code=200)
 def edit_akun_admin_pengawas(admin:JSONAdminPengawas, response:Response, user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):

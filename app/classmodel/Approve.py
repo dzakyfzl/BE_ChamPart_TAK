@@ -9,3 +9,7 @@ class JSONApproveAdmin(BaseModel):
     unique_character: str
     idInstansi: int
     isApproved: bool
+
+class JSONApproveAdminPengawas(BaseModel):
+    email: str
+    unique_character: str

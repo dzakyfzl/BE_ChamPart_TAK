@@ -4,13 +4,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, text, func, delete, update
 
 from app.classmodel.Account import JSONUpdatePassword
+from app.database.models.refreshToken import RefreshToken
 
 from ..database.database import get_db
 
 from ..database.models import * 
 from ..classmodel import *
 
-from ..auth.jwt_auth import create_token
+from ..auth.jwt_auth import create_refresh_token, create_token
 from ..depedency import validate_token
 from ..security.adminPass import verif_pass
 from email_validator import validate_email, EmailNotValidError
@@ -41,8 +42,24 @@ def register_user(pengguna: JSONPengguna, response: Response, db: Session = Depe
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message":"akun sudah ada, harap untuk login"}
     
-    access_token = create_token(pengguna.username,"Pengguna")
-    if access_token == "Error":
+    try:
+        db.execute(delete(RefreshToken).where(RefreshToken.username==pengguna.username))
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    access_token = create_token(pengguna.username,"AdminInstansi")
+    refresh_token = create_refresh_token(pengguna.username,"Pengguna")
+    try:
+        db.execute(insert(RefreshToken).values(username=pengguna.username,isi=refresh_token))
+        db.commit()
+    except Exception as e:
+        print(f"ERROR : {e}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message":"error pada sambungan database"}
+    
+    if access_token == "Error" or refresh_token == "Error":
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {"message":"tidak bisa generate token, Harap coba lagi"}
 
@@ -58,7 +75,7 @@ def register_user(pengguna: JSONPengguna, response: Response, db: Session = Depe
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message":"error pada sambungan database"}
     
-    return {"message":"akun telah dibuat","token":access_token}
+    return {"message":"akun telah dibuat","access_token":access_token,"refresh_token":refresh_token}
 
 @router.post("/edit", status_code=200)
 def edit_akun_pengguna(pengguna:JSONPengguna, response:Response, user: Annotated[dict, Depends(validate_token)],db:Session = Depends(get_db)):
