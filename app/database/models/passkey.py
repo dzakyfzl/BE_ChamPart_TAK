@@ -6,7 +6,8 @@ class Passkey(Base):
     __tablename__ = "Passkey"
     
     isiPasskey = Column(String(256), primary_key=True, nullable=False)
-    idInstansi = Column(Integer,ForeignKey('Instansi.idInstansi'), nullable=False)
+    email = Column(String(50),nullable=True)
+    idInstansi = Column(Integer,ForeignKey('Instansi.idInstansi'), nullable=True)
 
     instansi = relationship("Instansi", backref="passkey")
 

@@ -3,6 +3,7 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, exists, insert, select, delete, text, update
 
+from app.classmodel.Approve import JSONApproveAdminPengawas
 from app.classmodel.Kegiatan import JSONChangeStatus
 from app.database.models.calonAdminInstansi import CalonAdminInstansi
 from app.depedency import send_email
@@ -142,6 +143,26 @@ def approve_pendaftaran_admin_instansi(request: JSONApproveAdmin,bg_tasks:Backgr
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return {"message":"error pada sambungan database"}
 
+    return message
+
+@router.post('/admin-pengawas',status_code=200)
+def approve_pendaftaran_admin_pengawas(request: JSONApproveAdminPengawas,bg_tasks:BackgroundTasks,user: Annotated[dict, Depends(validate_token)], response : Response, db:Session = Depends(get_db)):
+
+    if user["role"] != "AdminPengawas":
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {"message":"anda tidak dapat mengunakan layanan ini"}
+    if request.isApproved:
+        hashed_passkey = generate_pass(request.unique_character,request.email,"AdminPengawas")
+
+        try:
+            db.execute(insert(Passkey).values(isiPasskey=hashed_passkey,idInstansi=request.idInstansi))
+        except Exception as e:
+            print(f"ERROR : {e}")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return {"message":"error pada sambungan database"}
+        isi = f"Selamat, akun anda dengan email {request.email} telah diterima sebagai admin pengawas \n\nPasskey : {request.unique_character} \n\nPERINGATAN : Jangan sebarkan Passkey ke siapapun"
+        bg_tasks.add_task(send_email,"CHAMPART -  Akun anda berhasil di approve",isi,request.email)
+        message = {"message":f"sukses mengapprove {request.email} menjadi admin pengawas"}
     return message
 
 @router.post('/kegiatan/{id}',status_code=200)
